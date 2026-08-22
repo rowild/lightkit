@@ -10,12 +10,10 @@
     "build": "nuxt build",
     "dev": "nuxt dev --port 4000",
     "generate": "nuxt generate",
-    "preview": "npm run build && wrangler dev",
+    "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "deploy": "npm run build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@lucide/vue": "^1.17.0",
@@ -30,8 +28,6 @@
   },
   "devDependencies": {
     "@types/suncalc": "^1.9.2",
-    "nitro-cloudflare-dev": "^0.2.2",
-    "vitest": "^4.1.10",
-    "wrangler": "^4.125.0"
+    "vitest": "^4.1.10"
   }
 }
