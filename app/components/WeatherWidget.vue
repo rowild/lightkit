@@ -13,7 +13,7 @@
         Weather deactivated
       </h5>
       <p class="t-body-sm max-w-xs">
-        Add your OpenWeatherMap API key in settings to see live wind, gusts, cloud cover and a flight safety rating.
+        Add your OpenWeatherMap API key in settings to see live wind, gusts, cloud cover, precipitation and a flight safety rating.
       </p>
     </div>
 
@@ -92,8 +92,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CloudOff, AlertTriangle, Wind, Zap, Cloud, Navigation, ShieldCheck, ShieldAlert, Shield, Eye, CloudFog, Waves } from '@lucide/vue'
+import { CloudOff, AlertTriangle, Wind, Zap, Cloud, CloudRain, Snowflake, Navigation, ShieldCheck, ShieldAlert, Shield, Eye, CloudFog, Waves } from '@lucide/vue'
 import type { WeatherData, AirQuality } from '../composables/useWeather'
+import { describePrecipitation } from '../utils/weatherPrecipitation'
 
 const props = defineProps<{
   weather: WeatherData | null
@@ -111,11 +112,12 @@ const props = defineProps<{
   bare?: boolean
 }>()
 
-// One description of the four readouts, rather than four near-identical
+// One description of the readouts, rather than several near-identical
 // blocks of markup that each had to be corrected separately.
 const metrics = computed(() => {
   const w = props.weather
   if (!w) return []
+  const precipitation = describePrecipitation(w.precipitation)
   return [
     {
       label: 'Wind speed',
@@ -143,6 +145,15 @@ const metrics = computed(() => {
       unit: '%',
       valueClass: '',
       unitClass: '',
+      iconStyle: undefined
+    },
+    {
+      label: 'Precipitation',
+      icon: precipitation.kind === 'snow' ? Snowflake : CloudRain,
+      value: precipitation.label,
+      unit: precipitation.detail,
+      valueClass: precipitation.kind === 'none' ? '' : 'text-brand-glow-cyan',
+      unitClass: 'normal-case',
       iconStyle: undefined
     },
     {

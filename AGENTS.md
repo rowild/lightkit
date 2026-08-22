@@ -8,6 +8,13 @@ plan is read once, by whoever executes it.
 LightKit's design system is defined in [nuxt.config.ts](./nuxt.config.ts) (font
 loading) and [main.css](./app/assets/css/main.css) (tokens and type roles).
 
+## Runtime
+
+Before running any Node, npm, npx, Nuxt or test command, read `.nvmrc`, activate
+that version with the available version manager (`nvm use` in this workspace),
+and verify that `node --version` matches. The ambient shell runtime is not
+authoritative.
+
 ## Fonts
 
 Three faces, each with one job. **Josefin is the voice, Plex is what you read,
@@ -344,10 +351,13 @@ on `moveend`: a pixel is only true for the view that measured it.
     lists only the three basemap hosts. A cached picture of where the rain was
     yesterday is worse than no picture.
 *   **`WeatherStrip.vue`** rides on the coordinates line inside the search
-    panel, so it costs no height. Cloud cover always; rain only when there IS
-    rain, because zero millimetres is the normal case and printing it every day
-    spends the width the wind reading needs on the day it matters. Tapping it
-    opens the full widget in a dialog, where `bare` drops the card chrome.
+    panel, so it costs no height. Cloud cover always; rain or snow only when
+    there IS precipitation, because zero millimetres is the normal case and
+    printing it every day spends the width the wind reading needs on the day it
+    matters. Tapping it opens the full widget in a dialog, where `bare` drops
+    the card chrome. The full Weather Conditions dialog always carries an
+    explicit precipitation row: `None`, `Rain`, `Snow`, or `Rain + snow`, with
+    hourly intensity and forecast probability when OpenWeather provides it.
 *   Cloud and rain lead, not wind. **This tool is as much for photographers as
     for drone pilots**, and what the sky is doing outranks how hard it blows.
 *   Wind and gust share one icon and read as a range, `18–29`. They are the same

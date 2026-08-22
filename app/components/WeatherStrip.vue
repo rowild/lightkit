@@ -13,11 +13,11 @@
       <Cloud class="w-2.5 h-2.5 shrink-0 self-center" :stroke-width="2.25" />{{ Math.round(weather.clouds) }}%
     </span>
 
-    <!-- Rain only when there IS rain. Zero millimetres is the normal case, and
-         printing it every day would cost the width that the wind reading needs
-         on the day it matters. -->
-    <span v-if="weather.rain > 0" class="flex items-center gap-1 text-brand-glow-cyan">
-      <Droplet class="w-2.5 h-2.5 shrink-0 self-center" :stroke-width="2.25" />{{ weather.rain.toFixed(1) }}
+    <!-- Precipitation only when it is active. Zero millimetres is the normal
+         case, and printing it every day would cost the width that the wind
+         reading needs on the day it matters. -->
+    <span v-if="precipitation.kind !== 'none'" class="flex items-center gap-1 text-brand-glow-cyan">
+      <component :is="precipitationIcon" class="w-2.5 h-2.5 shrink-0 self-center" :stroke-width="2.25" />{{ precipitationValue }}
     </span>
 
     <!-- Wind and gust share one icon and read as a range: they are the same
@@ -25,11 +25,11 @@
          put the gust out of reach in the first place.
 
          The whole pair is the first thing dropped when the line runs out of
-         room, and the line only runs out when it is raining - which is the
-         moment the rain reading has earned that space. -->
+         room, and the line only runs out during precipitation - which is the
+         moment that reading has earned the space. -->
     <span
       class="items-center gap-1"
-      :class="weather.rain > 0 ? 'hidden xs:flex' : 'flex'"
+      :class="precipitation.kind !== 'none' ? 'hidden xs:flex' : 'flex'"
     >
       <Wind class="w-2.5 h-2.5 shrink-0 self-center" :stroke-width="2.25" />{{ windLabel }}
     </span>
@@ -61,10 +61,11 @@
  * the numbers for the one spot the marker is on.
  */
 import { ref, computed } from 'vue'
-import { Cloud, Droplet, Wind } from '@lucide/vue'
+import { Cloud, CloudRain, Droplet, Snowflake, Wind } from '@lucide/vue'
 import InfoModal from './InfoModal.vue'
 import WeatherWidget from './WeatherWidget.vue'
 import type { WeatherData, AirQuality } from '../composables/useWeather'
+import { describePrecipitation } from '../utils/weatherPrecipitation'
 
 const props = defineProps<{
   weather: WeatherData | null
@@ -75,6 +76,29 @@ const props = defineProps<{
 }>()
 
 const open = ref(false)
+
+const precipitation = computed(() => {
+  const weather = props.weather
+  return weather
+    ? describePrecipitation(weather.precipitation)
+    : { kind: 'none' as const, label: 'None', detail: '' }
+})
+
+const precipitationIcon = computed(() => {
+  if (precipitation.value.kind === 'snow') return Snowflake
+  if (precipitation.value.kind === 'mixed') return CloudRain
+  return Droplet
+})
+
+const precipitationValue = computed(() => {
+  const weather = props.weather
+  if (!weather) return ''
+  const { rainMmPerHour, snowMmPerHour } = weather.precipitation
+  if (rainMmPerHour > 0 && snowMmPerHour > 0) {
+    return `${rainMmPerHour.toFixed(1)}+${snowMmPerHour.toFixed(1)}`
+  }
+  return Math.max(rainMmPerHour, snowMmPerHour).toFixed(1)
+})
 
 /**
  * "9" on a steady day, "9-17" when it gusts.

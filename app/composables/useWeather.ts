@@ -1,4 +1,9 @@
 import { ref, watch, onMounted } from 'vue'
+import {
+  precipitationFromCurrent,
+  precipitationFromForecast
+} from '../utils/weatherPrecipitation'
+import type { WeatherPrecipitation } from '../utils/weatherPrecipitation'
 
 export interface WeatherData {
   temp: number
@@ -9,7 +14,8 @@ export interface WeatherData {
   windDeg: number
   clouds: number // cloud cover %
   humidity: number
-  rain: number // mm last 1h/3h if available
+  /** Rain and snow normalized to hourly rates, plus forecast probability. */
+  precipitation: WeatherPrecipitation
   /** Metres, as reported. 10000 is the ceiling OpenWeatherMap reports. */
   visibility: number
   /** °C. Derived, not fetched - see dewPoint(). */
@@ -188,7 +194,7 @@ export const useWeather = () => {
         windDeg: currData.wind?.deg || 0,
         clouds: currentClouds,
         humidity: currentHumidity,
-        rain: currData.rain?.['1h'] || currData.rain?.['3h'] || 0,
+        precipitation: precipitationFromCurrent(currData),
         visibility: typeof currData.visibility === 'number' ? currData.visibility : 10000,
         dewPoint: currentDew,
         dewSpread: currentTemp - currentDew,
@@ -245,7 +251,7 @@ export const useWeather = () => {
     const windGust = (closestItem.wind?.gust || closestItem.wind?.speed || 0) * 3.6
     const clouds = closestItem.clouds?.all || 0
     const description = closestItem.weather?.[0]?.description || 'Clear'
-    const rain = closestItem.rain?.['3h'] / 3 || 0 // average per hour
+    const precipitation = precipitationFromForecast(closestItem)
     const temp = closestItem.main?.temp || 0
     const humidity = closestItem.main?.humidity || 0
     const dew = dewPoint(temp, humidity)
@@ -261,7 +267,7 @@ export const useWeather = () => {
       windDeg: closestItem.wind?.deg || 0,
       clouds,
       humidity,
-      rain,
+      precipitation,
       visibility: typeof closestItem.visibility === 'number' ? closestItem.visibility : 10000,
       dewPoint: dew,
       dewSpread: temp - dew,
