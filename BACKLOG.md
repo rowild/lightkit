@@ -65,6 +65,21 @@ already — noted against each so nobody starts from scratch.
 
 ## From the solar redesign — raised 2026-08-17
 
+- [ ] **Decide what “today” means for the weather report.** The date-only
+      selector is converted to noon. Late in the day, that target is already
+      outside OpenWeather's remaining forecast blocks, so the closest available
+      block can be early tomorrow while the selected date still says today.
+      The new `Forecast 02:00` source-time row makes the mismatch visible. The
+      product decision is whether today means current conditions or a noon
+      planning forecast; air quality must then follow the same time instead of
+      always remaining current.
+
+- [ ] **Use the local calendar date when the solar planner opens.** It currently
+      takes `new Date().toISOString()` and therefore uses the UTC date. In a
+      positive UTC offset, the app opens on yesterday between local midnight
+      and UTC midnight. This was observed in Vienna immediately after midnight
+      on 2026-08-23.
+
 - [ ] **Confirm the mouse-wheel zoom fix.** Robert reported that after closing
       the wind reading, wheel zoom stopped responding. It could not be
       reproduced with synthetic events in either mode. The likely mechanism is

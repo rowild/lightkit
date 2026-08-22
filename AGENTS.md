@@ -358,6 +358,19 @@ on `moveend`: a pixel is only true for the view that measured it.
     the card chrome. The full Weather Conditions dialog always carries an
     explicit precipitation row: `None`, `Rain`, `Snow`, or `Rain + snow`, with
     hourly intensity and forecast probability when OpenWeather provides it.
+*   The full dialog also shows **humidity**, **pressure movement**, and the
+    **time represented by the data**. Pressure compares the selected reading
+    with the forecast block nearest six hours later; at the end of the forecast
+    it falls back to the block nearest six hours earlier. Under 1 hPa is
+    `steady`; otherwise it reports `rising` or `falling` with the change and
+    interval. Invalid or missing pressure is omitted, never rendered as zero.
+*   A current observation reads `Updated 14:20 · 8 min ago`; a future value
+    reads `Forecast 18:00 · 3-hour block`. The clock is converted with the
+    location's OpenWeather timezone offset, not the browser's timezone.
+*   Drone safety is classified from OpenWeather's numeric condition code, not
+    its English description. Descriptions may be translated; the code remains
+    stable. Thunderstorms, squalls and tornadoes report severe weather, while
+    drizzle, rain and snow report precipitation.
 *   Cloud and rain lead, not wind. **This tool is as much for photographers as
     for drone pilots**, and what the sky is doing outranks how hard it blows.
 *   Wind and gust share one icon and read as a range, `18–29`. They are the same

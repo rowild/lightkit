@@ -2,7 +2,7 @@
 
 LightKit is a browser-based light and exposure planner for drone pilots, photographers and filmmakers. It brings solar timing, location planning, weather conditions, and neutral-density filter calculations into one responsive interface.
 
-The toolkit helps identify golden- and blue-hour windows for a selected place and date. Weather data adds wind, gust, cloud, precipitation, and basic flyability guidance so pilots can make a more informed go/no-go assessment. It is a planning aid only; always verify local airspace rules, weather, and aircraft limitations before flying.
+The toolkit helps identify golden- and blue-hour windows for a selected place and date. Weather data adds wind, gust, cloud, precipitation, humidity, pressure movement, and basic flyability guidance so pilots can make a more informed go/no-go assessment. It is a planning aid only; always verify local airspace rules, weather, and aircraft limitations before flying.
 
 ## Features
 
@@ -12,7 +12,8 @@ The toolkit helps identify golden- and blue-hour windows for a selected place an
 - Wind arrows across the visible map, with an optional animated flow, from Open-Meteo — no API key needed
 - Weather overlays for cloud, rain, pressure and temperature, each with its own strength setting
 - Current conditions and five-day forecast data from OpenWeatherMap
-- Wind, gust, cloud-cover, precipitation, visibility, fog risk, air quality and flyability indicators
+- Wind, gust, cloud cover, precipitation, humidity, six-hour pressure trend,
+  visibility, fog risk, air quality, source time and flyability indicators
 - ND-filter calculator: enter the exposure your camera meters and the frame rate you want, and it tells you which filter to fit
 - Gear list of 20 aircraft and 30 camera bodies, each with a cited source, narrowing the filter choice to what is sold for your model
 - Each tool has its own URL, so it can be bookmarked and shared

@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-08-23
+
+### Added
+
+- **Weather Conditions says what the precipitation is doing.** Rain and snow
+  now appear separately with hourly intensity, mixed precipitation keeps both
+  rates, and forecast readings include OpenWeather's probability. A dry report
+  says `None` instead of silently omitting the subject.
+- **Humidity, pressure movement and source time in the full weather report.**
+  Pressure is paired with its rising, steady or falling movement over roughly
+  six hours. Current observations show when they were updated; forecasts name
+  the exact three-hour block, both in the selected location's local time.
+
+### Changed
+
+- **Drone safety now reads OpenWeather condition codes instead of English
+  description text.** Translated descriptions can no longer hide rain, snow or
+  a thunderstorm from the go/no-go verdict.
+
 ### Fixed
 
 - **Rain on the map is visible at useful planning scales.** OpenWeather's

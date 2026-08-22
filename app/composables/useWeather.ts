@@ -4,6 +4,12 @@ import {
   precipitationFromForecast
 } from '../utils/weatherPrecipitation'
 import type { WeatherPrecipitation } from '../utils/weatherPrecipitation'
+import {
+  pressureSamplesFromForecast,
+  pressureTrendAt
+} from '../utils/weatherReport'
+import type { PressureTrend, WeatherReportTime } from '../utils/weatherReport'
+import { evaluateFlyability } from '../utils/weatherSafety'
 
 export interface WeatherData {
   temp: number
@@ -14,6 +20,12 @@ export interface WeatherData {
   windDeg: number
   clouds: number // cloud cover %
   humidity: number
+  /** Atmospheric pressure at the location, absent only for malformed data. */
+  pressureHpa: number | null
+  /** Forecast movement around the report time, when comparison data exists. */
+  pressureTrend: PressureTrend | null
+  /** Whether this is an observation or forecast, and its location-local time. */
+  reportTime: WeatherReportTime
   /** Rain and snow normalized to hourly rates, plus forecast probability. */
   precipitation: WeatherPrecipitation
   /** Metres, as reported. 10000 is the ceiling OpenWeatherMap reports. */
@@ -68,6 +80,7 @@ export const useWeather = () => {
   // Cached results to avoid over-fetching
   const currentWeather = ref<WeatherData | null>(null)
   const forecastList = ref<any[]>([])
+  const forecastTimezoneOffsetSeconds = ref(0)
   const airQuality = ref<AirQuality | null>(null)
 
   onMounted(() => {
@@ -77,6 +90,7 @@ export const useWeather = () => {
   const dropCache = () => {
     currentWeather.value = null
     forecastList.value = []
+    forecastTimezoneOffsetSeconds.value = 0
     airQuality.value = null
     error.value = null
   }
@@ -89,58 +103,6 @@ export const useWeather = () => {
   const clearApiKey = () => {
     keyStore.clearApiKey()
     dropCache()
-  }
-
-  /**
-   * Helper to determine drone safety based on wind and precipitation
-   */
-  const evaluateFlyability = (
-    windSpeedKmH: number,
-    windGustKmH: number,
-    description: string,
-    clouds: number
-  ): { status: 'safe' | 'caution' | 'unsafe'; reason: string } => {
-    const desc = description.toLowerCase()
-    
-    // 1. Extreme weather/precipitation
-    if (
-      desc.includes('rain') ||
-      desc.includes('snow') ||
-      desc.includes('storm') ||
-      desc.includes('thunderstorm') ||
-      desc.includes('drizzle') ||
-      desc.includes('hail')
-    ) {
-      return { status: 'unsafe', reason: 'Precipitation detected. Ground your drone.' }
-    }
-
-    // 2. High wind gusts (crucial)
-    if (windGustKmH >= 30) {
-      return { status: 'unsafe', reason: `Extreme wind gusts (${windGustKmH.toFixed(0)} km/h) exceed safety limits.` }
-    }
-    if (windSpeedKmH >= 25) {
-      return { status: 'unsafe', reason: `High wind speed (${windSpeedKmH.toFixed(0)} km/h) is dangerous for small drones.` }
-    }
-
-    // 3. Caution wind gusts
-    if (windGustKmH >= 20 || windSpeedKmH >= 15) {
-      return {
-        status: 'caution',
-        reason: `Moderate winds (${windSpeedKmH.toFixed(0)} km/h, gusting to ${windGustKmH.toFixed(0)} km/h). Expect battery drain and drift.`
-      }
-    }
-
-    // 4. Good flight conditions
-    let reason = 'Excellent flying conditions.'
-    if (clouds > 80) {
-      reason += ' Overcast sky: poor golden hour colors, but safe to fly.'
-    } else if (clouds < 20) {
-      reason += ' Clear skies: perfect lighting.'
-    } else {
-      reason += ' Scattered clouds: beautiful dynamic shadows.'
-    }
-
-    return { status: 'safe', reason }
   }
 
   /**
@@ -172,15 +134,35 @@ export const useWeather = () => {
 
       const currData = await currRes.json()
       const foreData = await foreRes.json()
+      forecastList.value = Array.isArray(foreData.list) ? foreData.list : []
+      forecastTimezoneOffsetSeconds.value = typeof foreData.city?.timezone === 'number'
+        ? foreData.city.timezone
+        : 0
+      const forecastPressureSamples = pressureSamplesFromForecast(forecastList.value)
 
       // Parse current weather
       const currentWindSpeed = (currData.wind?.speed || 0) * 3.6 // m/s to km/h
       const currentWindGust = (currData.wind?.gust || currData.wind?.speed || 0) * 3.6
       const currentClouds = currData.clouds?.all || 0
       const currentDesc = currData.weather?.[0]?.description || 'Clear'
-      
-      const flyInfo = evaluateFlyability(currentWindSpeed, currentWindGust, currentDesc, currentClouds)
-
+      const currentConditionCode = typeof currData.weather?.[0]?.id === 'number'
+        ? currData.weather[0].id
+        : 800
+      const currentPressure = typeof currData.main?.pressure === 'number'
+        ? currData.main.pressure
+        : null
+      const currentAtUnixSeconds = typeof currData.dt === 'number'
+        ? currData.dt
+        : Math.floor(Date.now() / 1000)
+      const currentTimezoneOffsetSeconds = typeof currData.timezone === 'number'
+        ? currData.timezone
+        : forecastTimezoneOffsetSeconds.value
+      const flyInfo = evaluateFlyability({
+        windSpeedKmH: currentWindSpeed,
+        windGustKmH: currentWindGust,
+        conditionCode: currentConditionCode,
+        cloudsPercent: currentClouds
+      })
       const currentTemp = currData.main?.temp || 0
       const currentHumidity = currData.main?.humidity || 0
       const currentDew = dewPoint(currentTemp, currentHumidity)
@@ -194,6 +176,18 @@ export const useWeather = () => {
         windDeg: currData.wind?.deg || 0,
         clouds: currentClouds,
         humidity: currentHumidity,
+        pressureHpa: currentPressure,
+        pressureTrend: currentPressure === null
+          ? null
+          : pressureTrendAt(
+              { atUnixSeconds: currentAtUnixSeconds, pressureHpa: currentPressure },
+              forecastPressureSamples
+            ),
+        reportTime: {
+          kind: 'current',
+          atUnixSeconds: currentAtUnixSeconds,
+          timezoneOffsetSeconds: currentTimezoneOffsetSeconds
+        },
         precipitation: precipitationFromCurrent(currData),
         visibility: typeof currData.visibility === 'number' ? currData.visibility : 10000,
         dewPoint: currentDew,
@@ -202,8 +196,6 @@ export const useWeather = () => {
         flyabilityReason: flyInfo.reason
       }
 
-      // Store forecast list
-      forecastList.value = foreData.list || []
     } catch (e: any) {
       error.value = e.message || 'An error occurred while fetching weather data.'
       currentWeather.value = null
@@ -251,12 +243,26 @@ export const useWeather = () => {
     const windGust = (closestItem.wind?.gust || closestItem.wind?.speed || 0) * 3.6
     const clouds = closestItem.clouds?.all || 0
     const description = closestItem.weather?.[0]?.description || 'Clear'
+    const conditionCode = typeof closestItem.weather?.[0]?.id === 'number'
+      ? closestItem.weather[0].id
+      : 800
     const precipitation = precipitationFromForecast(closestItem)
     const temp = closestItem.main?.temp || 0
     const humidity = closestItem.main?.humidity || 0
+    const pressureHpa = typeof closestItem.main?.pressure === 'number'
+      ? closestItem.main.pressure
+      : null
+    const atUnixSeconds = typeof closestItem.dt === 'number'
+      ? closestItem.dt
+      : Math.floor(Date.now() / 1000)
     const dew = dewPoint(temp, humidity)
 
-    const flyInfo = evaluateFlyability(windSpeed, windGust, description, clouds)
+    const flyInfo = evaluateFlyability({
+      windSpeedKmH: windSpeed,
+      windGustKmH: windGust,
+      conditionCode,
+      cloudsPercent: clouds
+    })
 
     return {
       temp,
@@ -267,6 +273,18 @@ export const useWeather = () => {
       windDeg: closestItem.wind?.deg || 0,
       clouds,
       humidity,
+      pressureHpa,
+      pressureTrend: pressureHpa === null
+        ? null
+        : pressureTrendAt(
+            { atUnixSeconds, pressureHpa },
+            pressureSamplesFromForecast(forecastList.value)
+          ),
+      reportTime: {
+        kind: 'forecast',
+        atUnixSeconds,
+        timezoneOffsetSeconds: forecastTimezoneOffsetSeconds.value
+      },
       precipitation,
       visibility: typeof closestItem.visibility === 'number' ? closestItem.visibility : 10000,
       dewPoint: dew,

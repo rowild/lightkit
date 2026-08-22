@@ -71,7 +71,7 @@
                   <Transition name="slide">
                     <div v-show="activeSection === 'api'" class="mt-2 flex flex-col gap-3 pl-6 t-body-sm">
                       <p>
-                        Live wind speed, gust force, cloud cover and precipitation come from OpenWeatherMap. The key is stored in this browser only.
+                        Live wind speed, gust force, cloud cover, humidity, precipitation and pressure come from OpenWeatherMap. The key is stored in this browser only.
                       </p>
                       <p>
                         Don't have a key? Sign up at

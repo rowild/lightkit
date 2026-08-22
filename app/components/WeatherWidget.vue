@@ -13,7 +13,7 @@
         Weather deactivated
       </h5>
       <p class="t-body-sm max-w-xs">
-        Add your OpenWeatherMap API key in settings to see live wind, gusts, cloud cover, precipitation and a flight safety rating.
+        Add your OpenWeatherMap API key in settings to see live wind, gusts, cloud cover, humidity, precipitation, pressure and a flight safety rating.
       </p>
     </div>
 
@@ -92,9 +92,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CloudOff, AlertTriangle, Wind, Zap, Cloud, CloudRain, Snowflake, Navigation, ShieldCheck, ShieldAlert, Shield, Eye, CloudFog, Waves } from '@lucide/vue'
+import { CloudOff, AlertTriangle, Wind, Zap, Cloud, CloudRain, Snowflake, Navigation, ShieldCheck, ShieldAlert, Shield, Eye, CloudFog, Waves, Droplets, Gauge, Clock3 } from '@lucide/vue'
 import type { WeatherData, AirQuality } from '../composables/useWeather'
 import { describePrecipitation } from '../utils/weatherPrecipitation'
+import {
+  describePressureTrend,
+  describeWeatherReportTime
+} from '../utils/weatherReport'
 
 const props = defineProps<{
   weather: WeatherData | null
@@ -112,12 +116,19 @@ const props = defineProps<{
   bare?: boolean
 }>()
 
+const now = useNow(60_000)
+
 // One description of the readouts, rather than several near-identical
 // blocks of markup that each had to be corrected separately.
 const metrics = computed(() => {
   const w = props.weather
   if (!w) return []
   const precipitation = describePrecipitation(w.precipitation)
+  const pressureTrend = w.pressureTrend ? describePressureTrend(w.pressureTrend) : null
+  const reportTime = describeWeatherReportTime(
+    w.reportTime,
+    Math.floor(now.value.getTime() / 1000)
+  )
   return [
     {
       label: 'Wind speed',
@@ -148,6 +159,15 @@ const metrics = computed(() => {
       iconStyle: undefined
     },
     {
+      label: 'Humidity',
+      icon: Droplets,
+      value: Math.round(w.humidity),
+      unit: '%',
+      valueClass: '',
+      unitClass: '',
+      iconStyle: undefined
+    },
+    {
       label: 'Precipitation',
       icon: precipitation.kind === 'snow' ? Snowflake : CloudRain,
       value: precipitation.label,
@@ -156,6 +176,20 @@ const metrics = computed(() => {
       unitClass: 'normal-case',
       iconStyle: undefined
     },
+    ...(w.pressureHpa === null
+      ? []
+      : [{
+          label: 'Pressure',
+          icon: Gauge,
+          value: Math.round(w.pressureHpa),
+          unit: pressureTrend ? `hPa · ${pressureTrend}` : 'hPa',
+          valueClass: w.pressureTrend?.direction === 'falling'
+            ? 'text-brand-glow-amber'
+            : '',
+          // hPa is case-sensitive; the label role normally uppercases units.
+          unitClass: 'normal-case',
+          iconStyle: undefined
+        }]),
     {
       label: 'Wind heading',
       icon: Navigation,
@@ -202,7 +236,16 @@ const metrics = computed(() => {
           unitClass: 'normal-case',
           iconStyle: undefined
         }]
-      : [])
+      : []),
+    {
+      label: reportTime.label,
+      icon: Clock3,
+      value: reportTime.value,
+      unit: reportTime.detail,
+      valueClass: '',
+      unitClass: 'normal-case',
+      iconStyle: undefined
+    }
   ]
 })
 
