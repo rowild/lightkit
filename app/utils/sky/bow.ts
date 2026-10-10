@@ -22,7 +22,7 @@ import {
 } from '../skyGeometry'
 import { disposeTree } from './dispose'
 import { Morph, createMorphRunner } from './morph'
-import { KIND_COLORS, KIND_INTENSITY, PALETTE } from './palette'
+import { KIND_COLORS, KIND_INTENSITY, PALETTE, RIM_OPACITY } from './palette'
 import { glowTexture } from './textures'
 import type { SkyLayer } from './types'
 
@@ -339,9 +339,7 @@ export const createBow = (): SkyLayer => {
         uniforms.uOpacity!.value = opacity
         uniforms.uTime!.value = time
       })
-      // Each rim adds to the fan beneath it. Kept low, the edge stays amber and
-      // cyan instead of adding up to white.
-      for (const rim of rims) rim.material.opacity = 0.35 * opacity * reveal.fans[rim.slot]!.value
+      for (const rim of rims) rim.material.opacity = RIM_OPACITY * opacity * reveal.fans[rim.slot]!.value
       ringMaterial.opacity = 0.2 * opacity * reveal.horizon
       tickMaterial.opacity = 0.18 * opacity * reveal.horizon
       discMaterial.opacity = 0.025 * opacity * reveal.horizon

@@ -43,6 +43,13 @@ export const KIND_INTENSITY: Record<SkyKind, number> = {
   night: 0.3
 }
 
+/**
+ * How strongly each golden and blue window's rim is drawn over its fan. The
+ * rim adds to the fan beneath it: kept low, the edge stays amber and cyan
+ * instead of adding up to white.
+ */
+export const RIM_OPACITY = 0.35
+
 const SUN_STOPS: ReadonlyArray<readonly [number, string]> = [
   [-6, '#ff5a3c'],
   [0, '#ff6a3c'],
