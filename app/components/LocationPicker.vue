@@ -359,6 +359,7 @@ import { useWindField } from '../composables/useWindField'
 import { createParticleField, sampleWind } from '../utils/windParticles'
 import { createOpenWeatherTileSource } from '../utils/openWeatherMapTiles'
 import InfoModal from './InfoModal.vue'
+import { usePlaceSearch, reverseGeocodeName } from '../composables/usePlaceSearch'
 
 const props = defineProps<{
   lat: number
@@ -375,9 +376,14 @@ const emit = defineEmits<{
 }>()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
-const searchQuery = ref('')
-const searchResults = ref<any[]>([])
-const showResults = ref(false)
+// The template's names are kept, so the markup does not change.
+const {
+  query: searchQuery,
+  results: searchResults,
+  showResults,
+  onInput: onSearchInput,
+  clear: clearSearch
+} = usePlaceSearch()
 const locating = ref(false)
 
 // OpenLayers instances. Kept outside reactive state: they are large, deeply
@@ -397,7 +403,6 @@ let ol: {
   fromLonLat: any; toLonLat: any; transformExtent: any; defaults: any
   Layer: any; applyTransform: any
 } | null = null
-let searchTimeout: any = null
 let resizeObserver: ResizeObserver | null = null
 
 // Tile styles. URL templates use OpenLayers' {x}/{y}/{z} placeholders; {a-d} is
@@ -1178,35 +1183,8 @@ let skipNextReverseGeocode = false
 
 // Reverse geocoding function to update the search input query with the location name
 const reverseGeocode = async (latitude: number, longitude: number) => {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=12`,
-      {
-        headers: { 'Accept-Language': 'en' }
-      }
-    )
-    if (response.ok) {
-      const data = await response.json()
-      if (data && data.address) {
-        const address = data.address
-        const city = address.city || address.town || address.village || address.municipality || address.suburb
-        const country = address.country
-        if (city && country) {
-          searchQuery.value = `${city}, ${country}`
-        } else if (data.display_name) {
-          searchQuery.value = data.display_name
-        } else {
-          searchQuery.value = `${latitude.toFixed(4)}°, ${longitude.toFixed(4)}°`
-        }
-      } else if (data && data.display_name) {
-        searchQuery.value = data.display_name
-      } else {
-        searchQuery.value = `${latitude.toFixed(4)}°, ${longitude.toFixed(4)}°`
-      }
-    }
-  } catch (err) {
-    console.error('[LocationPicker] Reverse geocoding failed', err)
-  }
+  const name = await reverseGeocodeName(latitude, longitude)
+  if (name !== null) searchQuery.value = name
 }
 
 // Watch coordinates to update map position (e.g. from GPS or search)
@@ -1249,41 +1227,6 @@ watch(() => props.apiKey, () => {
   if (!props.apiKey) weatherMenuOpen.value = false
   applyWeatherLayer()
 })
-
-// Nominatim Geocoding Search
-const onSearchInput = () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  
-  if (!searchQuery.value.trim()) {
-    searchResults.value = []
-    showResults.value = false
-    return
-  }
-
-  // Debounce API calls to 400ms to be polite to OSM Nominatim API
-  searchTimeout = setTimeout(async () => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(searchQuery.value)}`,
-        {
-          headers: { 'Accept-Language': 'en' }
-        }
-      )
-      if (response.ok) {
-        searchResults.value = await response.json()
-        showResults.value = searchResults.value.length > 0
-      }
-    } catch (e) {
-      console.error('Error fetching geocoding results', e)
-    }
-  }, 400)
-}
-
-const clearSearch = () => {
-  searchQuery.value = ''
-  searchResults.value = []
-  showResults.value = false
-}
 
 const selectResult = (result: any) => {
   const latitude = parseFloat(result.lat)
@@ -1357,7 +1300,6 @@ onUnmounted(() => {
   if (process.client) {
     document.removeEventListener('click', closeSearch)
   }
-  if (searchTimeout) clearTimeout(searchTimeout)
   if (windRefreshTimer) clearTimeout(windRefreshTimer)
   cancelWindField()
   clearPress()
