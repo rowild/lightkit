@@ -85,6 +85,7 @@ import LocationPicker from '../components/LocationPicker.vue'
 import { useWeather } from '../composables/useWeather'
 import { useTheme } from '../composables/useTheme'
 import { usePersistedRef, readPersisted } from '../composables/usePersistedRef'
+import { toLocalDateString } from '../utils/localDate'
 
 // This tool now fits one screen at every size, so the shell may cap its own
 // height and keep the footer on the bottom edge instead of below the fold.
@@ -95,7 +96,8 @@ useHead({ title: 'Solar Planner // LightKit' })
 const { isDark } = useTheme()
 
 // The date always opens on today; a remembered date would be stale by morning.
-const dateStr = ref(new Date().toISOString().split('T')[0])
+// Today on the reader's own calendar, not in UTC (see toLocalDateString).
+const dateStr = ref(toLocalDateString(new Date()))
 
 // Location is remembered, because picking a spot on the map is a real choice.
 // Default is Reykjavik, Iceland until the browser or the user says otherwise.
