@@ -177,10 +177,14 @@ export const createBeads = (): SkyLayer => {
       sample = next
       const target = sunTargets()
       if (!target) return
-      sunPosition.retarget(target.position)
-      sunState.retarget(target.state)
-      // Mid-glide the running morph carries the sun along; otherwise it steps.
-      if (!runner.running) {
+      // Mid-glide only the aim moves, so the sun is not thrown by the shared
+      // progress; otherwise it steps to the new spot.
+      if (runner.running) {
+        sunPosition.aim(target.position)
+        sunState.aim(target.state)
+      } else {
+        sunPosition.retarget(target.position)
+        sunState.retarget(target.state)
         sunPosition.apply(1)
         sunState.apply(1)
         write()

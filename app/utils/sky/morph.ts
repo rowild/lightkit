@@ -24,6 +24,18 @@ export class Morph {
     this.moving = true
   }
 
+  /**
+   * Change only the target, keeping the start, so a morph that is already
+   * running does not jump. A morph that is not moving behaves like `retarget`.
+   */
+  aim(target: ArrayLike<number>) {
+    if (!this.moving) {
+      this.retarget(target)
+      return
+    }
+    this.to.set(target)
+  }
+
   /** Move to `progress` (0–1) of the way. A morph with no target stays put. */
   apply(progress: number) {
     if (!this.moving) return
