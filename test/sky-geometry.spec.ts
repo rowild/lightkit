@@ -155,9 +155,29 @@ describe('sunSample', () => {
     expect(s.az).toBeCloseTo(expected.azimuth, 9)
   })
 
-  it('keeps f inside the span', () => {
-    expect(sunSample(model, new Date(model.spanStart - 3_600_000)).f).toBe(0)
-    expect(sunSample(model, new Date(model.spanEnd + 3_600_000)).f).toBe(1)
+  it('wraps f round the span, because the day repeats', () => {
+    const hour = 3_600_000
+    const T = model.spanEnd - model.spanStart
+    expect(sunSample(model, new Date(model.spanStart - hour)).f).toBeCloseTo(1 - hour / T, 9)
+    expect(sunSample(model, new Date(model.spanEnd + hour)).f).toBeCloseTo(hour / T, 9)
+  })
+
+  it('does not pin the sun at the end of the span for a distant place', () => {
+    const sydney = buildSkyModel(noonOf('2026-10-10'), -33.87, 151.21)
+    const T = sydney.spanEnd - sydney.spanStart
+    const s = sunSample(sydney, new Date(sydney.spanEnd + 6 * 3_600_000))
+    expect(s.f).toBeCloseTo((6 * 3_600_000) / T, 9)
+    expect(s.f).toBeGreaterThan(0.2)
+    expect(s.f).toBeLessThan(0.3)
+  })
+
+  it('maps real SunCalc azimuths to the compass side: morning east (+X), afternoon west (-X)', () => {
+    const noon = sun.getSolarTimes(noonOf('2026-10-10'), 64.1466, -21.9426).solarNoon.getTime()
+    const up = model.path.filter((p) => p.alt > 0)
+    const morning = up.find((p) => p.t < noon)!
+    const afternoon = [...up].reverse().find((p) => p.t > noon)!
+    expect(skyPoint(morning)[0]).toBeGreaterThan(0)
+    expect(skyPoint(afternoon)[0]).toBeLessThan(0)
   })
 })
 

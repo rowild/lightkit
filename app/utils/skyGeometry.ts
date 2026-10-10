@@ -169,10 +169,17 @@ export const sunTimeFor = (date: Date, lat: number, lng: number, now: Date): Dat
   return sameDay ? now : useSun().getSolarTimes(date, lat, lng).solarNoon
 }
 
-/** The sun at a moment, as a sample of this model. `f` stays inside the span. */
+/**
+ * The sun at a moment, as a sample of this model. The span is one solar day
+ * that can sit up to 12 h away from the device's day, and the day repeats, so
+ * a moment outside it wraps round (it is not clamped to an end). The wrapped
+ * position lands in the right fan and agrees with the label times, which carry
+ * no date.
+ */
 export const sunSample = (model: SkyModel, time: Date): SkySample => {
   const { altitude, azimuth } = useSun().getSunPosition(time, model.lat, model.lng)
-  const f = clamp01((time.getTime() - model.spanStart) / (model.spanEnd - model.spanStart))
+  const share = (time.getTime() - model.spanStart) / (model.spanEnd - model.spanStart)
+  const f = share >= 0 && share <= 1 ? share : share - Math.floor(share)
   const nearest = model.path[Math.round(f * (PATH_SAMPLES - 1))]!
   return { t: time.getTime(), alt: altitude, az: azimuth, f, kind: nearest.kind }
 }
