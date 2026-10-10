@@ -31,11 +31,11 @@ const O = new THREE.Vector3(...OBSERVER)
 const FAN_TRIANGLES = WINDOW_SAMPLES - 1
 
 const FAN_STYLE: Record<WindowName, { color: string; strength: number }> = {
-  'Morning Blue Hour': { color: PALETTE.blue, strength: 0.5 },
-  'Morning Golden Hour': { color: PALETTE.golden, strength: 0.55 },
-  'Daylight': { color: PALETTE.structure, strength: 0.11 },
-  'Evening Golden Hour': { color: PALETTE.golden, strength: 0.55 },
-  'Evening Blue Hour': { color: PALETTE.blue, strength: 0.5 }
+  'Morning Blue Hour': { color: PALETTE.blue, strength: 0.6 },
+  'Morning Golden Hour': { color: PALETTE.golden, strength: 0.75 },
+  'Daylight': { color: PALETTE.structure, strength: 0.05 },
+  'Evening Golden Hour': { color: PALETTE.golden, strength: 0.75 },
+  'Evening Blue Hour': { color: PALETTE.blue, strength: 0.6 }
 }
 
 const FAN_VERTEX = /* glsl */ `
@@ -66,8 +66,8 @@ const FAN_FRAGMENT = /* glsl */ `
     // Feather the two straight edges a touch, so they read as light, not paper.
     float sides = smoothstep(0.0, 0.035, vAlong) * smoothstep(1.0, 0.965, vAlong);
     // A slow shimmer travelling along the fan, and faint rays across it.
-    float shimmer = 0.86 + 0.14 * sin(vAlong * 22.0 - uTime * 1.1 + vEdge * 5.0);
-    float rays = 0.82 + 0.18 * sin(vAlong * 140.0 + sin(uTime * 0.3) * 2.0);
+    float shimmer = 0.88 + 0.12 * sin(vAlong * 22.0 - uTime * 1.1 + vEdge * 5.0);
+    float rays = 0.95 + 0.05 * sin(vAlong * 140.0 + sin(uTime * 0.3) * 2.0);
     gl_FragColor = vec4(uColor, body * sides * shimmer * rays * uStrength * uOpacity);
     #include <colorspace_fragment>
   }`
@@ -82,7 +82,13 @@ const makeLine = (points: number, width: number, color: string | null) => {
     vertexColors: color === null,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending
+    blending: THREE.AdditiveBlending,
+    // Drops the round cap at each end of every segment. Added up at each
+    // joint, the caps would string a dim line into beads; with no gap
+    // (gapSize 0) the "dash" is simply the whole line.
+    dashed: true,
+    dashSize: 1,
+    gapSize: 0
   })
   const line = new Line2(geometry, material)
   line.frustumCulled = false
@@ -321,7 +327,7 @@ export const createBow = (): SkyLayer => {
       timeline.to(reveal, { horizon: 1, duration: 0.8, ease: 'power1.out' }, 0.3)
       timeline.to(reveal, { path: 1, duration: 1.2, ease: 'power1.inOut' }, 0.4)
       present.forEach((entry, order) => {
-        timeline.to(reveal.fans[entry.slot]!, { value: 1, duration: 0.7, ease: 'power2.out' }, 1.2 + order * 0.15)
+        timeline.to(reveal.fans[entry.slot]!, { value: 1, duration: 0.8, ease: 'power3.out' }, 1.2 + order * 0.15)
       })
     },
     update(time) {
@@ -333,13 +339,15 @@ export const createBow = (): SkyLayer => {
         uniforms.uOpacity!.value = opacity
         uniforms.uTime!.value = time
       })
-      for (const rim of rims) rim.material.opacity = opacity * reveal.fans[rim.slot]!.value
-      ringMaterial.opacity = 0.35 * opacity * reveal.horizon
-      tickMaterial.opacity = 0.3 * opacity * reveal.horizon
-      discMaterial.opacity = 0.04 * opacity * reveal.horizon
+      // Each rim adds to the fan beneath it. Kept low, the edge stays amber and
+      // cyan instead of adding up to white.
+      for (const rim of rims) rim.material.opacity = 0.35 * opacity * reveal.fans[rim.slot]!.value
+      ringMaterial.opacity = 0.2 * opacity * reveal.horizon
+      tickMaterial.opacity = 0.18 * opacity * reveal.horizon
+      discMaterial.opacity = 0.025 * opacity * reveal.horizon
       const beat = (time % 3) / 3
       pulse.scale.setScalar(1 + 3 * beat)
-      pulseMaterial.opacity = 0.8 * (1 - beat) * opacity
+      pulseMaterial.opacity = 0.6 * (1 - beat) * opacity
       pinMaterial.opacity = opacity
       stemMaterial.opacity = 0.7 * opacity
     },

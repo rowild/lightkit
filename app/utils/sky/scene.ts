@@ -51,10 +51,10 @@ type PlanetFactory = (renderer: THREE.WebGLRenderer) => Promise<Planet>
 const PLANET_FACTORIES: Partial<Record<PlanetMode, PlanetFactory>> = { earth: createEarth, dots: createDots }
 
 const DEG = Math.PI / 180
-const CAMERA_DISTANCE = 3.2
+const CAMERA_DISTANCE = 5
 const CAMERA_ELEVATION = 22 * DEG
 /** Half the width that must stay in view: the bow, its labels and a margin. */
-const FIT_HALF_WIDTH = 1.6
+const FIT_HALF_WIDTH = 2.6
 const TAP_SLOP_PX = 6
 const TAP_MAX_MS = 350
 const MORPH_SECONDS = 1.2
@@ -139,10 +139,10 @@ export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOp
   const cameraDirection = (southern: boolean) =>
     new THREE.Vector3(0, Math.sin(CAMERA_ELEVATION), (southern ? 1 : -1) * Math.cos(CAMERA_ELEVATION))
 
-  /** Keep the bow's whole width in view; on an upright phone, pull back and centre the planet. */
+  /** Keep the bow's whole width in view; on an upright phone, pull back and centre the bow and planet together. */
   const fit = (direction = camera.position.clone().sub(controls.target).normalize()) => {
     const aspect = camera.aspect
-    const target = new THREE.Vector3(0, aspect >= 1 ? PLANET_RADIUS + 0.35 : PLANET_RADIUS - 0.35, 0)
+    const target = new THREE.Vector3(0, aspect >= 1 ? PLANET_RADIUS + 0.75 : PLANET_RADIUS - 0.1, 0)
     const distance = Math.max(CAMERA_DISTANCE, FIT_HALF_WIDTH / (Math.tan((camera.fov * DEG) / 2) * aspect))
     controls.target.copy(target)
     controls.minDistance = Math.min(2.2, distance * 0.7)

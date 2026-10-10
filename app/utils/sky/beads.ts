@@ -94,9 +94,9 @@ export const createBeads = (): SkyLayer => {
     return s
   }
   const halo = sprite(glow, 0.9)
-  const sunRays = sprite(rays, 1.15)
-  const core = sprite(glow, 0.22)
-  const marker = sprite(ring, 0.14)
+  const sunRays = sprite(rays, 1.0)
+  const core = sprite(glow, 0.24)
+  const marker = sprite(ring, 0.12)
   const sun = new THREE.Group()
   sun.add(halo, sunRays, core, marker)
   group.add(sun)
@@ -196,7 +196,7 @@ export const createBeads = (): SkyLayer => {
       reveal.beads = 0
       reveal.sun = 0
       timeline.to(reveal, { beads: 1, duration: 0.8, ease: 'none' }, 1.4)
-      timeline.to(reveal, { sun: 1, duration: 0.5, ease: 'back.out(2.2)' }, 2.0)
+      timeline.to(reveal, { sun: 1, duration: 0.5, ease: 'back.out(1.6)' }, 2.0)
     },
     update(time) {
       material.uniforms.uReveal!.value = -0.05 + reveal.beads * 1.1
@@ -207,8 +207,8 @@ export const createBeads = (): SkyLayer => {
       sunRays.material.rotation = time * 0.05
       core.material.opacity = sunVisible * shown
       halo.material.opacity = 0.55 * sunVisible * shown
-      sunRays.material.opacity = 0.3 * sunVisible * shown
-      marker.material.opacity = 0.6 * (1 - sunVisible) * shown
+      sunRays.material.opacity = 0.2 * sunVisible * shown
+      marker.material.opacity = 0.4 * (1 - sunVisible) * shown
     },
     dispose() {
       runner.kill()

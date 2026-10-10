@@ -46,6 +46,9 @@ export const createLabels = (): SkyLayer => {
     element.style.textShadow = SHADOW
     element.style.transition = 'opacity 0.3s ease'
     const object = new CSS2DObject(element)
+    // Golden times hang above their point, blue times below it: a clearance of
+    // the label's own height in pixels, at any zoom and on any screen.
+    object.center.set(0.5, golden ? 1 : 0)
     group.add(object)
     return { name, golden, element, object, text: '' }
   })
@@ -65,10 +68,10 @@ export const createLabels = (): SkyLayer => {
   /** Outside the rim: golden above and blue below on the sky path, stacked outward on the clock. */
   const anchorFor = (middle: SkySample, golden: boolean, southern: boolean): Vec3 => {
     if (mode === 'sky') {
-      const [x, y, z] = layoutPoint(middle, 'sky', southern, R * 1.14)
-      return [x, y + (golden ? 0.07 : -0.07), z]
+      const [x, y, z] = layoutPoint(middle, 'sky', southern, R * 1.2)
+      return [x, y + (golden ? 0.24 : -0.29), z]
     }
-    return layoutPoint(middle, 'clock', southern, R * (golden ? 1.12 : 1.26))
+    return layoutPoint(middle, 'clock', southern, R * (golden ? 1.24 : 1.32))
   }
 
   const anchors = new Morph(LABELLED.length * 3)
@@ -133,7 +136,7 @@ export const createLabels = (): SkyLayer => {
         for (const label of windows) label.element.style.opacity = String(windowOpacity)
         lastWindowOpacity = windowOpacity
       }
-      const compassOpacity = opacity * reveal.labels * 0.85
+      const compassOpacity = opacity * reveal.labels * 0.7
       if (compassOpacity !== lastCompassOpacity) {
         for (const element of compass) element.style.opacity = String(compassOpacity)
         lastCompassOpacity = compassOpacity

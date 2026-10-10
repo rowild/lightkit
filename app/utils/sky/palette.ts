@@ -29,12 +29,17 @@ export const KIND_COLORS: Record<SkyKind, string> = {
   night: '#3e6a70'
 }
 
-/** How strongly each kind is drawn on the path. The light worth flying for leads. */
+/**
+ * How strongly each kind is drawn on the path. The golden and blue stretches
+ * stay low because each window's own rim is drawn over them, additively: at
+ * full strength the two would add up to white. The day arc is structure, and
+ * recedes.
+ */
 export const KIND_INTENSITY: Record<SkyKind, number> = {
-  golden: 1,
-  blue: 1,
-  day: 0.7,
-  twilight: 0.6,
+  golden: 0.1,
+  blue: 0.1,
+  day: 0.42,
+  twilight: 0.4,
   night: 0.3
 }
 

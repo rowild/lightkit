@@ -45,7 +45,9 @@ const DOT_VERTEX = /* glsl */ `
   void main() {
     vSin = dot(normalize(mat3(modelMatrix) * position), uSunDir);
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = uSize * uPixelRatio * clamp(3.2 / -mv.z, 0.45, 1.4);
+    // Shrinks with distance all the way down, so a small globe on a phone
+    // keeps the gaps between its dots instead of closing into a solid mass.
+    gl_PointSize = uSize * uPixelRatio * clamp(3.2 / -mv.z, 0.3, 1.4);
     gl_Position = projectionMatrix * mv;
   }`
 
@@ -64,8 +66,8 @@ const DOT_FRAGMENT = /* glsl */ `
     float edge = smoothstep(0.5, 0.3, d);
     float light = smoothstep(-0.12, 0.1, vSin);
     vec3 color = mix(uNight, uDay * (0.75 + 0.7 * clamp(vSin, 0.0, 1.0)), light);
-    color = mix(color, uGolden * 1.2, band(vSin, uBands.y, uBands.x));
-    color = mix(color, uBlue * 1.15, band(vSin, uBands.w, uBands.z));
+    color = mix(color, uGolden, 0.8 * band(vSin, uBands.y, uBands.x));
+    color = mix(color, uBlue, 0.75 * band(vSin, uBands.w, uBands.z));
     gl_FragColor = vec4(color, edge * uOpacity);
     #include <colorspace_fragment>
   }`

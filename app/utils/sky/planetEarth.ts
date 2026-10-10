@@ -47,17 +47,21 @@ const SURFACE_FRAGMENT = /* glsl */ `
     vec3 day = texture2D(uDay, vUv).rgb;
     vec3 night = texture2D(uNight, vUv).rgb;
     float light = smoothstep(-0.12, 0.10, s);
-    vec3 lit = day * (0.2 + 1.05 * clamp(s * 1.4 + 0.15, 0.0, 1.0));
+    vec3 lit = day * (0.15 + 0.8 * clamp(s * 1.4 + 0.15, 0.0, 1.0));
     float darkness = 1.0 - smoothstep(-0.2, 0.02, s);
     vec3 dark = day * 0.03 + night * vec3(1.0, 0.8, 0.55) * 1.5 * darkness;
     vec3 color = mix(dark, lit, light);
-    color += uGolden * band(s, uBands.y, uBands.x) * 0.55;
-    color += uBlue * band(s, uBands.w, uBands.z) * 0.5;
-    // A thin bright limb on the lit side, warming along the day/night line.
     vec3 view = normalize(cameraPosition - vPosW);
-    float rim = pow(1.0 - max(dot(n, view), 0.0), 3.0);
+    float facing = max(dot(n, view), 0.0);
+    // The bands glow over the land rather than paint it, and fade towards the
+    // limb, where they would otherwise bunch into a solid ring.
+    float glow = smoothstep(0.0, 0.55, facing);
+    color += uGolden * band(s, uBands.y, uBands.x) * 0.16 * glow;
+    color += uBlue * band(s, uBands.w, uBands.z) * 0.1 * glow;
+    // A thin bright limb on the lit side, warming along the day/night line.
+    float rim = pow(1.0 - facing, 3.0);
     float dusk = 1.0 - smoothstep(0.0, 0.3, abs(s));
-    color += mix(uAir, uDusk, dusk) * rim * 0.45 * smoothstep(-0.25, 0.2, s);
+    color += mix(uAir, uDusk, dusk) * rim * 0.3 * smoothstep(-0.25, 0.2, s);
     gl_FragColor = vec4(color, uOpacity);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -75,11 +79,11 @@ const AIR_FRAGMENT = /* glsl */ `
     // Back faces point away from the camera: facing is 0 at the halo's outer
     // edge and grows towards the planet, which hides everything inside it.
     float facing = dot(n, normalize(vPosW - cameraPosition));
-    float halo = pow(clamp(facing * 3.6, 0.0, 1.0), 1.6);
+    float halo = pow(clamp(facing * 3.0, 0.0, 1.0), 1.6);
     float s = dot(n, uSunDir);
     float lit = smoothstep(-0.3, 0.25, s);
     float dusk = 1.0 - smoothstep(0.0, 0.32, abs(s + 0.04));
-    vec3 color = mix(uAir, uDusk, dusk) * halo * (0.12 + 0.88 * lit) * uOpacity;
+    vec3 color = mix(uAir, uDusk, dusk) * halo * (0.08 + 0.72 * lit) * uOpacity;
     gl_FragColor = vec4(color, 1.0);
     #include <colorspace_fragment>
   }`
@@ -127,7 +131,7 @@ export const createEarth = async (renderer: THREE.WebGLRenderer): Promise<Planet
     depthWrite: false,
     blending: THREE.AdditiveBlending
   })
-  const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.04, 96, 48), airMaterial)
+  const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.05, 96, 48), airMaterial)
   atmosphere.renderOrder = 1
 
   const group = new THREE.Group()

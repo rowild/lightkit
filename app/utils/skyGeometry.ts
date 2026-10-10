@@ -29,7 +29,7 @@ export const PATH_SAMPLES = 721
 export const WINDOW_SAMPLES = 49
 export const PLANET_RADIUS = 1
 /** Bigger than the planet on purpose: the blue fans float clear of its curve (spec 5.7). */
-export const BOW_RADIUS = 1.15
+export const BOW_RADIUS = 1.6
 /** Where every fan starts: the selected place, on top of the planet. */
 export const OBSERVER: Vec3 = [0, PLANET_RADIUS, 0]
 

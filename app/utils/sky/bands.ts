@@ -17,9 +17,13 @@ export const bandUniform = () =>
     Math.sin(SOLAR_ALTITUDES.blueBottom * DEG)
   )
 
-/** 1 inside [lo, hi], fading softly outside it. */
+/**
+ * A soft bump over [lo, hi]: 1 in the middle, exactly half at lo and at hi,
+ * nothing half a band-width outside. A glow with no hard edge, whose
+ * half-brightness line still sits on the real phase boundary.
+ */
 export const BAND_GLSL = /* glsl */ `
   float band(float x, float lo, float hi) {
-    float soft = (hi - lo) * 0.45;
-    return smoothstep(lo - soft, lo + soft * 0.3, x) * (1.0 - smoothstep(hi - soft * 0.3, hi + soft, x));
+    float soft = (hi - lo) * 0.5;
+    return smoothstep(lo - soft, lo + soft, x) * (1.0 - smoothstep(hi - soft, hi + soft, x));
   }`
