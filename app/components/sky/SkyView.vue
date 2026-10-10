@@ -59,6 +59,13 @@
           <div class="grow"></div>
 
           <div class="relative z-10 flex flex-col items-center gap-2 px-3 sm:px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <p
+              v-for="note in notes"
+              :key="note"
+              class="glass-panel rounded-xl px-3 py-2 max-w-md text-center t-body-sm text-ink-muted"
+            >
+              {{ note }}
+            </p>
             <div class="flex flex-wrap items-center justify-center gap-2">
               <div role="radiogroup" aria-label="Bow" class="inline-flex p-0.5 rounded-xl glass-panel">
                 <button
@@ -149,6 +156,9 @@ const choosePlanet = (mode: PlanetMode) => {
   storedPlanet.value = mode
   if (mode === 'earth') earthUnavailable.value = false
 }
+
+// Short notes above the switches: why something the reader expects is missing.
+const notes = computed(() => (earthUnavailable.value ? ['Earth images are not cached yet.'] : []))
 
 // The place on show. It starts at the page's place and is never written back
 // (spec rule 1): comparing places must not overwrite a launch site.

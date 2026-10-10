@@ -15,6 +15,7 @@ import { worldToLatLng, type Quat } from '../globeMath'
 import { PLANET_RADIUS, skyDirection, type BowMode, type SkyModel, type SkySample } from '../skyGeometry'
 import { createStars } from './stars'
 import { createEarth } from './planetEarth'
+import { createDots } from './planetDots'
 import type { Planet, SkyLayer } from './types'
 
 export type PlanetMode = 'earth' | 'dots'
@@ -43,7 +44,7 @@ export interface SkyScene {
 type PlanetFactory = (renderer: THREE.WebGLRenderer) => Promise<Planet>
 
 /** The planet looks this scene can build. A look not listed simply does not appear. */
-const PLANET_FACTORIES: Partial<Record<PlanetMode, PlanetFactory>> = { earth: createEarth }
+const PLANET_FACTORIES: Partial<Record<PlanetMode, PlanetFactory>> = { earth: createEarth, dots: createDots }
 
 const DEG = Math.PI / 180
 const CAMERA_DISTANCE = 3.2
