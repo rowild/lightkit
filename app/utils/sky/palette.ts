@@ -15,7 +15,9 @@ export const PALETTE = {
   dotsDay: '#42777b',
   dotsNight: '#193134',
   dotsCore: '#06100f',
-  star: '#dbe9ff'
+  star: '#dbe9ff',
+  spaceInner: '#0b1418',
+  spaceOuter: '#05080a'
 } as const
 
 /** Path and bead colour for each kind of light. */

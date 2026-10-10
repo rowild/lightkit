@@ -13,6 +13,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 import gsap from 'gsap'
 import { worldToLatLng, type Quat } from '../globeMath'
 import { PLANET_RADIUS, skyDirection, type BowMode, type SkyModel, type SkySample } from '../skyGeometry'
+import { PALETTE } from './palette'
 import { createStars } from './stars'
 import { createBow } from './bow'
 import { createEarth } from './planetEarth'
@@ -62,10 +63,25 @@ const INTRO_SPIN = 25 * DEG
 
 export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOptions): SkyScene => {
   // Throws where WebGL is unavailable. SkyView catches it and shows its note.
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' })
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setClearColor(0x000000, 0)
+  renderer.setClearColor(PALETTE.spaceOuter, 1)
   renderer.outputColorSpace = THREE.SRGBColorSpace
+
+  // Space is drawn in WebGL: on a transparent canvas, additive glows write
+  // alpha and darken the page behind. Matches the overlay's CSS gradient.
+  const space = document.createElement('canvas')
+  space.width = space.height = 256
+  const spaceContext = space.getContext('2d')!
+  spaceContext.setTransform(1.2 * 256, 0, 0, 0.9 * 256, 128, 0.38 * 256)
+  const spaceGradient = spaceContext.createRadialGradient(0, 0, 0, 0, 0, 1)
+  spaceGradient.addColorStop(0, PALETTE.spaceInner)
+  spaceGradient.addColorStop(0.7, PALETTE.spaceOuter)
+  spaceGradient.addColorStop(1, PALETTE.spaceOuter)
+  spaceContext.fillStyle = spaceGradient
+  spaceContext.fillRect(-4, -4, 8, 8)
+  const spaceTexture = new THREE.CanvasTexture(space)
+  spaceTexture.colorSpace = THREE.SRGBColorSpace
 
   const labels = new CSS2DRenderer({ element: labelLayer })
   const ctx = gsap.context(() => {})
@@ -74,6 +90,7 @@ export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOp
   }
 
   const scene = new THREE.Scene()
+  scene.background = spaceTexture
   const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 200)
   const controls = new OrbitControls(camera, canvas)
   controls.enableDamping = true
@@ -357,6 +374,7 @@ export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOp
     for (const planet of Object.values(planets)) planet?.dispose()
     for (const layer of layers) layer.dispose()
     labelLayer.replaceChildren()
+    spaceTexture.dispose()
     renderer.dispose()
     renderer.forceContextLoss()
   }
