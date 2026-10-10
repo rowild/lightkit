@@ -253,10 +253,24 @@ export const useSun = () => {
     return null
   }
 
+  /**
+   * The notice for a date with no golden or blue hour at all, or '' when it
+   * has one. Shared by LightWindows and the sky view, so both explain an empty
+   * day in the same words.
+   */
+  const getPolarExplanation = (date: Date, lat: number, lng: number): string => {
+    const magic = ['Morning Blue Hour', 'Morning Golden Hour', 'Evening Golden Hour', 'Evening Blue Hour']
+    if (getSolarSegments(date, lat, lng).some(s => magic.includes(s.name))) return ''
+    return getSunPosition(date, lat, lng).altitude > 0
+      ? 'POLAR DAY: Continuous daylight. The sun remains above the horizon; golden and blue hours do not occur.'
+      : 'POLAR NIGHT: Continuous darkness. The sun remains below the horizon; golden and blue hours do not occur.'
+  }
+
   return {
     getSolarTimes,
     getSunPosition,
     getSolarSegments,
-    getCurrentSegment
+    getCurrentSegment,
+    getPolarExplanation
   }
 }

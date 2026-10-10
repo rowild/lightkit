@@ -77,18 +77,9 @@ const getPhaseTimes = (phaseName: string) => {
   return `${formatTime(seg.start)} - ${formatTime(seg.end)}`
 }
 
-const hasAnyMagicHour = computed(() => {
-  const targetNames = ['Morning Blue Hour', 'Morning Golden Hour', 'Evening Golden Hour', 'Evening Blue Hour']
-  return segments.value.some(s => targetNames.includes(s.name))
-})
-
-const polarStateExplanation = computed(() => {
-  if (hasAnyMagicHour.value) return ''
-
-  const pos = sunCalc.getSunPosition(props.date, props.lat, props.lng)
-  if (pos.altitude > 0) {
-    return 'POLAR DAY: Continuous daylight. The sun remains above the horizon; golden and blue hours do not occur.'
-  }
-  return 'POLAR NIGHT: Continuous darkness. The sun remains below the horizon; golden and blue hours do not occur.'
-})
+// Shared with the sky view, so both explain an empty day the same way.
+const polarStateExplanation = computed(() =>
+  sunCalc.getPolarExplanation(props.date, props.lat, props.lng)
+)
+const hasAnyMagicHour = computed(() => polarStateExplanation.value === '')
 </script>

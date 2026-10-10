@@ -47,3 +47,17 @@ describe('getSolarSegments', () => {
     ])
   })
 })
+
+describe('getPolarExplanation', () => {
+  it('is empty on a day with golden or blue hour', () => {
+    expect(sun.getPolarExplanation(noonOf('2026-10-10'), 64.1466, -21.9426)).toBe('')
+  })
+
+  it('explains polar day', () => {
+    expect(sun.getPolarExplanation(noonOf('2026-06-21'), 78.2232, 15.6267)).toMatch(/^POLAR DAY/)
+  })
+
+  it('explains polar night', () => {
+    expect(sun.getPolarExplanation(noonOf('2026-12-21'), 78.2232, 15.6267)).toMatch(/^POLAR NIGHT/)
+  })
+})

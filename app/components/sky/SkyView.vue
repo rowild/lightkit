@@ -21,6 +21,10 @@
           aria-label="Sky view"
           class="fixed inset-x-0 top-0 h-svh z-5500 flex flex-col text-ink bg-[radial-gradient(120%_90%_at_50%_38%,#0b1418_0%,#05080a_70%)]"
         >
+          <ul class="sr-only">
+            <li v-for="line in windowSummary" :key="line">{{ line }}</li>
+          </ul>
+
           <!-- Hidden until ready: while the planet's images load, the bow would
                otherwise stand alone in space and then vanish for the opening. -->
           <div
@@ -117,6 +121,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { X } from '@lucide/vue'
 import { usePersistedRef } from '../../composables/usePersistedRef'
 import { useNow } from '../../composables/useNow'
+import { useSun } from '../../composables/useSun'
 import { buildSkyModel, sunSample, sunTimeFor, type BowMode } from '../../utils/skyGeometry'
 import { orientationFor } from '../../utils/globeMath'
 import type { SkyScene, PlanetMode } from '../../utils/sky/scene'
@@ -157,8 +162,22 @@ const choosePlanet = (mode: PlanetMode) => {
   if (mode === 'earth') earthUnavailable.value = false
 }
 
+const sunCalc = useSun()
+const polarNote = computed(() => sunCalc.getPolarExplanation(props.date, place.value.lat, place.value.lng))
+
 // Short notes above the switches: why something the reader expects is missing.
-const notes = computed(() => (earthUnavailable.value ? ['Earth images are not cached yet.'] : []))
+const notes = computed(() =>
+  [polarNote.value, earthUnavailable.value ? 'Earth images are not cached yet.' : ''].filter(Boolean)
+)
+
+const formatTime = (d: Date) =>
+  d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+// The canvas is hidden from screen readers; this list says what the fans draw.
+const windowSummary = computed(() =>
+  model.value.windows
+    .filter(w => w.kind !== 'day')
+    .map(w => `${w.name}: ${formatTime(w.start)} to ${formatTime(w.end)}`)
+)
 
 // The place on show. It starts at the page's place and is never written back
 // (spec rule 1): comparing places must not overwrite a launch site.
