@@ -1,11 +1,23 @@
 import SunCalc from 'suncalc'
 
+/**
+ * The sun altitudes, in degrees, that bound LightKit's light phases. One
+ * place, because the sky view's planet shaders draw the same bands that
+ * `getSolarSegments()` names.
+ */
+export const SOLAR_ALTITUDES = {
+  goldenTop: 6,
+  horizon: 0,
+  blueTop: -4,
+  blueBottom: -8
+} as const
+
 // Register custom solar times for LightKit:
 // -8°: Start of Blue Hour (morning) / End of Blue Hour (evening)
 // -4°: End of Blue Hour (morning) / Start of Blue Hour (evening)
 try {
-  SunCalc.addTime(-8, 'blueHourMornStart', 'blueHourEveEnd')
-  SunCalc.addTime(-4, 'blueHourMornEnd', 'blueHourEveStart')
+  SunCalc.addTime(SOLAR_ALTITUDES.blueBottom, 'blueHourMornStart', 'blueHourEveEnd')
+  SunCalc.addTime(SOLAR_ALTITUDES.blueTop, 'blueHourMornEnd', 'blueHourEveStart')
 } catch (e) {
   console.warn('Custom solar times registration warning:', e)
 }
@@ -171,11 +183,11 @@ export const useSun = () => {
       let colorClass = ''
       let description = ''
       
-      if (alt > 6) {
+      if (alt > SOLAR_ALTITUDES.goldenTop) {
         name = 'Daylight'
         colorClass = 'bg-brand-petrol-800/10 text-brand-petrol-300'
         description = 'Standard flying. Direct overhead sunlight, strong contrast.'
-      } else if (alt > 0) {
+      } else if (alt > SOLAR_ALTITUDES.horizon) {
         if (midpoint.getTime() < noon) {
           name = 'Morning Golden Hour'
           colorClass = 'bg-brand-glow-amber/35 text-brand-glow-amber border-b-2 border-brand-glow-amber'
@@ -185,11 +197,11 @@ export const useSun = () => {
           colorClass = 'bg-brand-glow-amber/35 text-brand-glow-amber border-b-2 border-brand-glow-amber'
           description = 'Golden hour: Sun is between 6° and 0° above the horizon. Soft, warm diffused light. The absolute peak flight window for cinematic warmth.'
         }
-      } else if (alt > -4) {
+      } else if (alt > SOLAR_ALTITUDES.blueTop) {
         name = 'Civil Twilight Transition'
         colorClass = 'bg-brand-petrol-900/10 text-brand-petrol-400'
         description = 'Sun rises/sets close to the horizon (between -4° and 0°). Muted transition light.'
-      } else if (alt > -8) {
+      } else if (alt > SOLAR_ALTITUDES.blueBottom) {
         if (midpoint.getTime() < noon) {
           name = 'Morning Blue Hour'
           colorClass = 'bg-brand-glow-cyan/35 text-brand-glow-cyan border-b-2 border-brand-glow-cyan'
