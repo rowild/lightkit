@@ -537,6 +537,10 @@ each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
     bands from `SOLAR_ALTITUDES`. The view must never disagree with the bar.
 *   **There is no time scrubber, on purpose.** On one place the fans already
     show the whole day; changing the place is what shows something new.
+*   **The Clock's sun wraps; the Day Schedule needle stops.** The bar's needle
+    stops at the ends of its day, but the sky view's Clock shows the sun where
+    it is in its own solar day (wrapped), so near midnight the two can differ.
+    Both are night.
 *   **The stage is always dark**, via `data-theme="dark"` on the overlay root.
 *   **Three.js is imported only when the view opens**, from `app/utils/sky/`.
     `SkyView.vue` reaches it through `import()` and `import type` only. Keep it

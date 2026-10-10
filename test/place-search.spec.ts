@@ -127,6 +127,19 @@ describe('usePlaceSearch', () => {
     expect(search.showResults.value).toBe(false)
   })
 
+  it('cancel() stops a pending search and leaves the query alone', async () => {
+    vi.useFakeTimers()
+    const fetcher = reply([])
+    const search = usePlaceSearch(fetcher)
+    search.query.value = '64.1, -21.9'
+    search.onInput()
+    search.cancel()
+    await vi.advanceTimersByTimeAsync(500)
+    await settle()
+    expect(fetcher).not.toHaveBeenCalled()
+    expect(search.query.value).toBe('64.1, -21.9')
+  })
+
   it('cancels a pending search when cleared', async () => {
     vi.useFakeTimers()
     const fetcher = reply([])

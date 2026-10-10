@@ -124,5 +124,5 @@ export const usePlaceSearch = (fetcher: Fetcher = fetch) => {
 
   if (getCurrentInstance()) onUnmounted(cancel)
 
-  return { query, results, showResults, onInput, clear }
+  return { query, results, showResults, onInput, clear, cancel }
 }

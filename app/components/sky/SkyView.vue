@@ -174,7 +174,7 @@
         </p>
         <p>
           A bead marks each full hour; the brighter the bead, the higher the sun. The glowing bands on
-          the planet are everywhere golden or blue hour is happening at this moment.
+          the planet are everywhere golden or blue hour is happening at the moment the sun marks.
         </p>
         <p>
           Tap the planet or search to explore another place. Your place on the solar page does not
@@ -283,7 +283,7 @@ const place = ref({ lat: props.lat, lng: props.lng })
 const exploring = computed(() => place.value.lat !== props.lat || place.value.lng !== props.lng)
 
 // The search field doubles as the name of the place on show.
-const { query, results, showResults, onInput, clear: clearSearch } = usePlaceSearch()
+const { query, results, showResults, onInput, clear: clearSearch, cancel: cancelSearch } = usePlaceSearch()
 const nameOf = latestOnly(reverseGeocodeName)
 let home: { key: string; name: string } | null = null
 const homeKey = () => `${props.lat},${props.lng}`
@@ -306,18 +306,21 @@ const showHomeName = () => {
 }
 
 const pickPlace = (lat: number, lng: number) => {
+  cancelSearch()
   place.value = { lat, lng }
   showResults.value = false
   nameThePlace(lat, lng, false)
 }
 
 const choose = (result: PlaceResult) => {
+  cancelSearch()
   place.value = { lat: parseFloat(result.lat), lng: parseFloat(result.lon) }
   query.value = result.display_name
   showResults.value = false
 }
 
 const goHome = () => {
+  cancelSearch()
   place.value = { lat: props.lat, lng: props.lng }
   showResults.value = false
   showHomeName()
