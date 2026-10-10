@@ -3,6 +3,8 @@
 *Design agreed with Robert on 2026-10-10, in a brainstorming session. Every
 decision below was asked and answered; the reason is recorded next to it.*
 
+*Numbers updated on 2026-10-10 to the values tuned in the visual pass.*
+
 ## 1. Why
 
 The Day Schedule is a flat bar. It answers *when* the golden and blue hours
@@ -180,7 +182,7 @@ be a change to the whole page, not to this view.
 ### 5.7 The two layouts
 
 Both layouts turn a sample into a world point, with the same radius
-**R = 1.15 r** (a starting value, tuned in the visual pass). The bow is bigger
+**R = 1.6 r** (`BOW_RADIUS`, tuned in the visual pass). The bow is bigger
 than the planet on purpose: on a little planet the ground curves away fast, so
 the blue fans — which point *below* the horizon — float free above the surface
 instead of disappearing into it. No glass ground is needed.
@@ -289,13 +291,16 @@ ring), `stars.ts`, `palette.ts` (the colours below, in one place).
 
 ### 7.1 Camera
 
-Perspective, 35° vertical field of view. It looks at `O + (0, 0.35, 0)` from the
+Perspective, 35° vertical field of view. It looks at `O + (0, 0.75, 0)` (landscape; `O + (0, −0.1, 0)` on a portrait phone) from the
 **pole side**: from the north (−Z) north of the equator, from the south (+Z)
-south of it, about 3.2 units away and 22° above the horizon plane. From there
+south of it, 5 units away on a landscape screen and 22° above the horizon
+plane. On an upright phone it pulls back until the bow's half width (2.6 units,
+with its labels and a margin) fits the screen, and centres the bow and planet
+together. From there
 the bow leans away from the viewer and both horizons are in view.
 
 `OrbitControls` (from `three/addons`): damping on, pan off, zoom between 2.2
-and 6 units, polar angle limited so the camera cannot go under the planet.
+and 6 units (wider when the portrait fit pulls back: from 0.7 to 1.6 times the fitted distance), polar angle limited so the camera cannot go under the planet.
 
 Pixel ratio `min(devicePixelRatio, 2)`.
 
@@ -322,7 +327,7 @@ The stage uses the **dark-theme** accents, since it is always dark:
   uSunDir))`. Between 0° and 6° the surface glows golden; between −8° and −4°
   it glows blue. The thresholds come from `useSun.ts` as uniforms (section
   10), not as numbers in the shader.
-* **Atmosphere:** a second sphere at 1.04 r, back faces, a fresnel rim. Blue on
+* **Atmosphere:** a second sphere at 1.035 r, back faces, a fresnel rim. Blue on
   the day side, warming to orange along the terminator.
 
 ### 7.4 Planet: Dots
@@ -345,9 +350,9 @@ amber and cyan.
 * **Fans:** one triangle fan per window, `(O, Pᵢ, Pᵢ₊₁)` over its 49 samples.
   Two extra attributes: `aEdge` (0 at O, 1 at the rim) for a radial gradient,
   and `aAlong` (0 to 1 across the window) for the shimmer. Additive blending,
-  no depth write, both sides drawn. Alpha rises with `aEdge^1.5` to about 0.55
-  at the rim. The daylight fan uses the structure colour at about one fifth of
-  that.
+  no depth write, both sides drawn. Alpha rises with `aEdge^1.5` to a rim
+  strength of 0.75 for golden and 0.6 for blue. The daylight fan uses the
+  structure colour at 0.05.
 * **Rim highlight:** each golden and blue window's stretch of the path is drawn
   again, brighter and slightly wider, so the fan's edge reads as a line of light.
 * **Hour beads:** soft round sprites, additive. Size `0.5 + 0.5 s` of the base
@@ -357,11 +362,14 @@ amber and cyan.
 * **Sun:** a bright core sprite, a large soft glow sprite and a faint ray
   sprite turning slowly. Colour from the sun-core ramp in 7.2 by altitude.
   Below the horizon in the sky layout, only a faint ring marks where it is.
-* **Labels:** `CSS2DRenderer` objects. One per golden and blue fan at its rim
-  midpoint, reading `19:12–19:58` in `.t-num-xs`, in the fan's colour. In the
-  sky layout the golden label sits outside the rim above the horizon and the
-  blue one below it. In the clock layout they stack outward: golden at 1.12 R,
-  blue at 1.24 R, so a short window's two labels cannot overlap.
+* **Labels:** `CSS2DRenderer` objects. One per golden and blue fan, reading
+  `19:12–19:58` in `.t-num-xs`, in the fan's colour. Each is anchored at its
+  fan's tip (the window's middle on the bow) and set off in screen space: a
+  fixed pixel gap straight out from the pin, so it sits at the tip on any screen
+  and at any zoom. If that spot is taken (by the pin, the sun, the bow, a fan,
+  the planet, the horizon ring, a compass letter, another label or the screen
+  edge) the label turns round the tip, or steps out a little, until it is clear;
+  when nothing is free, the least bad spot wins.
 
 ### 7.6 Glow without bloom
 
