@@ -14,6 +14,7 @@ import gsap from 'gsap'
 import { worldToLatLng, type Quat } from '../globeMath'
 import { PLANET_RADIUS, skyDirection, type BowMode, type SkyModel, type SkySample } from '../skyGeometry'
 import { createStars } from './stars'
+import { createBow } from './bow'
 import { createEarth } from './planetEarth'
 import { createDots } from './planetDots'
 import type { Planet, SkyLayer } from './types'
@@ -90,7 +91,7 @@ export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOp
   spinner.add(globe)
   scene.add(spinner)
 
-  const layers: SkyLayer[] = []
+  const layers: SkyLayer[] = [createBow()]
   for (const layer of layers) scene.add(layer.object)
 
   const planets: Partial<Record<PlanetMode, Planet>> = {}
