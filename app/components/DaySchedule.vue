@@ -3,7 +3,22 @@
 
     <div class="row-kv">
       <h4 class="t-label text-[11px] sm:text-xs">Day Schedule</h4>
-      <span class="t-label-xs normal-case text-[10px] sm:text-[11px]">{{ formattedDate }}</span>
+      <!-- The date and the sky view's button share the value cell, so row-kv
+           still keeps the pair on one line. -->
+      <span class="inline-flex items-baseline gap-2">
+        <span class="t-label-xs normal-case text-[10px] sm:text-[11px]">{{ formattedDate }}</span>
+        <!-- On the panel's right edge, so justify-end (AGENTS.md, .tap). The
+             negative margin stops the 44px touch target growing the row. -->
+        <button
+          type="button"
+          aria-label="Open the sky view"
+          v-tooltip="'Open the sky view'"
+          class="tap grid items-center justify-end -my-4 self-center rounded-full text-ink-faint hover:text-brand-petrol-600 dark:hover:text-brand-glow transition-colors cursor-pointer"
+          @click="skyOpen = true"
+        >
+          <Orbit :size="16" :stroke-width="1.75" />
+        </button>
+      </span>
     </div>
 
     <!-- The live-time readout sits INSIDE the track. Above it, it needed 24px of
@@ -89,6 +104,9 @@
 
     <!-- Phase explanations. Teleported to body from inside the component. -->
     <PhaseInfoModal v-model:open="infoOpen" :highlight="infoPhase" />
+
+    <!-- The same day in 3D. Teleported to body; Three.js loads on first open. -->
+    <SkyView v-model:open="skyOpen" :lat="lat" :lng="lng" :date="date" />
   </div>
 </template>
 
@@ -100,10 +118,11 @@
  * between this block and the state cards, which one component cannot do.
  */
 import { ref, computed, watch } from 'vue'
-import { Clock } from '@lucide/vue'
+import { Clock, Orbit } from '@lucide/vue'
 import { useSun, type SolarTimes, type SolarSegment } from '../composables/useSun'
 import { useNow } from '../composables/useNow'
 import PhaseInfoModal from './PhaseInfoModal.vue'
+import SkyView from './sky/SkyView.vue'
 
 const props = defineProps<{
   lat: number
@@ -121,6 +140,8 @@ const segments = computed<SolarSegment[]>(() => sunCalc.getSolarSegments(props.d
 // cannot push the times a pilot is reading off the screen.
 const infoOpen = ref(false)
 const infoPhase = ref<string | null>(null)
+// The sky view overlay. Its own component; this block only owns the button.
+const skyOpen = ref(false)
 
 const openInfo = (phaseName: string | null) => {
   infoPhase.value = phaseName
