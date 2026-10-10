@@ -105,8 +105,10 @@ const attach = (el: HTMLElement, text: () => string) => {
   }
 
   // Keyboard focus shows it at once. Someone tabbing has already decided they
-  // want to know, and there is no pointer to "rest" for a delay.
+  // want to know, and there is no pointer to "rest" for a delay. Programmatic
+  // focus after a click (a dialog focusing its close button) must not pop it.
   const onFocus = () => {
+    if (!el.matches(':focus-visible')) return
     clearTimers()
     show(el, text())
   }

@@ -521,6 +521,32 @@ another's, and a module-level ref would leak between requests under SSR.
 a desktop, and inside a dialog behind the **Light windows** link on a phone,
 where the four blocks a pilot came for must fit one screen.
 
+## Sky view
+
+The orbit button in the Day Schedule header opens a full-screen 3D view of the
+day: a small planet, the sun's path as a bow over the selected place, and fans
+from the place to the golden and blue parts of the bow. Two bows (the true sky
+path, and the bar bent into a clock) and two planets (NASA Earth, a dot globe),
+each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
+`docs/superpowers/specs/2026-10-10-sky-view-design.md`.
+
+*   **It explores; it never moves the page.** A place picked in the view stays
+    there. Closing it leaves the solar page and `dpt:lat`/`dpt:lng` untouched.
+    Robert's rule: comparing places must not overwrite a launch site.
+*   **Fan times come from `getSolarSegments()`**, and the planet's twilight
+    bands from `SOLAR_ALTITUDES`. The view must never disagree with the bar.
+*   **There is no time scrubber, on purpose.** On one place the fans already
+    show the whole day; changing the place is what shows something new.
+*   **The stage is always dark**, via `data-theme="dark"` on the overlay root.
+*   **Three.js is imported only when the view opens**, from `app/utils/sky/`.
+    `SkyView.vue` reaches it through `import()` and `import type` only. Keep it
+    out of the entry chunk.
+*   **No bloom pass.** Glow is additive sprites and shaders; a bloom pass
+    doubles the fill cost on a phone.
+*   **Adding something to the stage is one entry in `layers`** in
+    `app/utils/sky/scene.ts`: a `SkyLayer` gets the model, the bow mode, the
+    sun and the opening timeline, and glides with `Morph`.
+
 ## Routing
 
 Each tool is a page under `app/pages/`, listed once in `app/data/tools.ts` with

@@ -81,6 +81,15 @@
             </div>
             <span class="t-label-xs normal-case shrink-0">{{ dateLabel }}</span>
             <button
+              type="button"
+              aria-label="About the sky view"
+              v-tooltip="'What this view shows'"
+              class="tap grid items-center justify-end rounded-full text-ink-faint hover:text-ink transition-colors cursor-pointer shrink-0"
+              @click="infoOpen = true"
+            >
+              <Info :size="20" :stroke-width="1.75" />
+            </button>
+            <button
               ref="closeEl"
               type="button"
               aria-label="Close the sky view"
@@ -145,6 +154,38 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- z-6000, above the overlay's z-5500, so it needs no `elevated`. -->
+    <InfoModal v-model:open="infoOpen" title="Sky view">
+      <div class="flex flex-col gap-4 t-body text-ink-muted">
+        <p>
+          The bow is the sun's path on this date, drawn over the place on top of the planet. Each fan
+          starts at that place and reaches the part of the bow where the light is golden (amber) or
+          blue (cyan).
+        </p>
+        <p>
+          <strong class="font-semibold text-ink">Sky path</strong> is the true path across the sky.
+          Golden fans sit just above the horizon ring, blue fans just below it. A low, flat bow means
+          long golden hours.
+        </p>
+        <p>
+          <strong class="font-semibold text-ink">Clock</strong> is the Day Schedule bent into a half
+          circle: from one midnight of the sun on the left to the next on the right, morning first.
+        </p>
+        <p>
+          A bead marks each full hour; the brighter the bead, the higher the sun. The glowing bands on
+          the planet are everywhere golden or blue hour is happening at this moment.
+        </p>
+        <p>
+          Tap the planet or search to explore another place. Your place on the solar page does not
+          change. Times are in this device's time zone.
+        </p>
+        <p class="t-body-sm text-ink-faint">
+          Earth imagery: NASA Visible Earth (Blue Marble) and NASA Earth Observatory (Black Marble).
+          Land outline: Natural Earth.
+        </p>
+      </div>
+    </InfoModal>
   </ClientOnly>
 </template>
 
@@ -159,7 +200,8 @@
  * overlay opens. Spec: docs/superpowers/specs/2026-10-10-sky-view-design.md.
  */
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { LocateFixed, Search, X } from '@lucide/vue'
+import { Info, LocateFixed, Search, X } from '@lucide/vue'
+import InfoModal from '../InfoModal.vue'
 import {
   formatCoordinates,
   latestOnly,
@@ -195,6 +237,10 @@ const rootEl = ref<HTMLElement | null>(null)
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const labelEl = ref<HTMLElement | null>(null)
 const closeEl = ref<HTMLButtonElement | null>(null)
+
+// The explanation lives behind ⓘ, not on the stage (AGENTS.md: secondary text
+// belongs in a modal).
+const infoOpen = ref(false)
 
 // Remembered choices (spec 6.4). Anything else found in storage falls back.
 const storedBow = usePersistedRef<string>('sky-bow', 'sky')
@@ -391,6 +437,7 @@ const onKeydown = (event: KeyboardEvent) => {
 let returnFocusTo: HTMLElement | null = null
 watch(() => props.open, async (isOpen) => {
   if (!isOpen) {
+    infoOpen.value = false
     clearSearch()
     returnFocusTo?.focus()
     returnFocusTo = null
