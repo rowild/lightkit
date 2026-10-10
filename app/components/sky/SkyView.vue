@@ -46,7 +46,39 @@
           </div>
 
           <div class="relative z-10 flex items-center gap-2 px-3 sm:px-5 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <div class="grow min-w-0"></div>
+            <div class="relative grow min-w-0 max-w-md">
+              <label for="sky-search" class="sr-only">Search a place</label>
+              <Search
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none"
+                :size="14"
+                :stroke-width="1.75"
+              />
+              <input
+                id="sky-search"
+                v-model="query"
+                type="text"
+                autocomplete="off"
+                :disabled="offline"
+                placeholder="Search a place"
+                class="w-full h-10 pl-9 pr-3 rounded-xl glow-input t-body-sm disabled:opacity-60"
+                @input="onInput"
+                @focus="($event.target as HTMLInputElement).select()"
+              />
+              <ul
+                v-if="showResults && results.length"
+                class="absolute left-0 right-0 top-full mt-1 glass-panel rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-brand-green-800/30"
+              >
+                <li v-for="result in results" :key="result.place_id">
+                  <button
+                    type="button"
+                    class="w-full text-left px-3 py-2.5 t-body-sm text-ink hover:bg-brand-green-500/15 cursor-pointer"
+                    @click="choose(result)"
+                  >
+                    {{ result.display_name }}
+                  </button>
+                </li>
+              </ul>
+            </div>
             <span class="t-label-xs normal-case shrink-0">{{ dateLabel }}</span>
             <button
               ref="closeEl"
@@ -99,6 +131,15 @@
                   {{ option.label }}
                 </button>
               </div>
+              <button
+                v-if="exploring"
+                type="button"
+                class="h-10 px-3 inline-flex items-center gap-1.5 rounded-xl glass-panel t-label text-[11px] text-ink hover:text-brand-glow transition-colors cursor-pointer"
+                @click="goHome"
+              >
+                <LocateFixed :size="14" :stroke-width="1.75" />
+                My place
+              </button>
             </div>
           </div>
         </div>
@@ -118,7 +159,14 @@
  * overlay opens. Spec: docs/superpowers/specs/2026-10-10-sky-view-design.md.
  */
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { X } from '@lucide/vue'
+import { LocateFixed, Search, X } from '@lucide/vue'
+import {
+  formatCoordinates,
+  latestOnly,
+  reverseGeocodeName,
+  usePlaceSearch,
+  type PlaceResult
+} from '../../composables/usePlaceSearch'
 import { usePersistedRef } from '../../composables/usePersistedRef'
 import { useNow } from '../../composables/useNow'
 import { useSun } from '../../composables/useSun'
@@ -167,7 +215,11 @@ const polarNote = computed(() => sunCalc.getPolarExplanation(props.date, place.v
 
 // Short notes above the switches: why something the reader expects is missing.
 const notes = computed(() =>
-  [polarNote.value, earthUnavailable.value ? 'Earth images are not cached yet.' : ''].filter(Boolean)
+  [
+    polarNote.value,
+    earthUnavailable.value ? 'Earth images are not cached yet.' : '',
+    offline.value ? 'Search needs a connection.' : ''
+  ].filter(Boolean)
 )
 
 const formatTime = (d: Date) =>
@@ -182,6 +234,57 @@ const windowSummary = computed(() =>
 // The place on show. It starts at the page's place and is never written back
 // (spec rule 1): comparing places must not overwrite a launch site.
 const place = ref({ lat: props.lat, lng: props.lng })
+const exploring = computed(() => place.value.lat !== props.lat || place.value.lng !== props.lng)
+
+// The search field doubles as the name of the place on show.
+const { query, results, showResults, onInput, clear: clearSearch } = usePlaceSearch()
+const nameOf = latestOnly(reverseGeocodeName)
+let home: { key: string; name: string } | null = null
+const homeKey = () => `${props.lat},${props.lng}`
+
+/** Coordinates at once, then the name when Nominatim answers. */
+const nameThePlace = async (lat: number, lng: number, isHome: boolean) => {
+  const coordinates = formatCoordinates(lat, lng)
+  query.value = coordinates
+  const name = await nameOf(lat, lng)
+  // undefined: a newer place was picked meanwhile. A changed field: the
+  // reader has started typing a search over the coordinates.
+  if (!name || query.value !== coordinates) return
+  query.value = name
+  if (isHome) home = { key: homeKey(), name }
+}
+
+const showHomeName = () => {
+  if (home?.key === homeKey()) query.value = home.name
+  else nameThePlace(props.lat, props.lng, true)
+}
+
+const pickPlace = (lat: number, lng: number) => {
+  place.value = { lat, lng }
+  showResults.value = false
+  nameThePlace(lat, lng, false)
+}
+
+const choose = (result: PlaceResult) => {
+  place.value = { lat: parseFloat(result.lat), lng: parseFloat(result.lon) }
+  query.value = result.display_name
+  showResults.value = false
+}
+
+const goHome = () => {
+  place.value = { lat: props.lat, lng: props.lng }
+  showResults.value = false
+  showHomeName()
+}
+
+const offline = ref(false)
+const onOnline = () => {
+  offline.value = false
+}
+const onOffline = () => {
+  offline.value = true
+  showResults.value = false
+}
 
 const now = useNow()
 const model = computed(() => buildSkyModel(props.date, place.value.lat, place.value.lng))
@@ -250,6 +353,7 @@ const start = async () => {
     status.value = 'no-webgl'
     return
   }
+  scene.onPick(pickPlace)
   scene.setModel(model.value, orientation.value, { animate: false })
   scene.setBow(bow.value, { animate: false })
   scene.setSun(sun.value, orientation.value)
@@ -276,12 +380,18 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.key !== 'Escape' || !props.open) return
   const target = event.target as Node | null
   if (target && target !== document.body && !rootEl.value?.contains(target)) return
+  // The first Escape closes an open result list, the next one the view.
+  if (showResults.value) {
+    showResults.value = false
+    return
+  }
   close()
 }
 
 let returnFocusTo: HTMLElement | null = null
 watch(() => props.open, async (isOpen) => {
   if (!isOpen) {
+    clearSearch()
     returnFocusTo?.focus()
     returnFocusTo = null
     return
@@ -289,14 +399,22 @@ watch(() => props.open, async (isOpen) => {
   returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
   place.value = { lat: props.lat, lng: props.lng }
   earthUnavailable.value = false
+  offline.value = !navigator.onLine
+  showHomeName()
   await nextTick()
   closeEl.value?.focus()
   start()
 })
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('online', onOnline)
+  window.addEventListener('offline', onOffline)
+})
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('online', onOnline)
+  window.removeEventListener('offline', onOffline)
   stop()
 })
 </script>
