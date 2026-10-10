@@ -23,11 +23,13 @@
     "ol": "^10.10.0",
     "suncalc": "^1.9.0",
     "tailwindcss": "^4.3.0",
+    "three": "^0.186.1",
     "vue": "^3.5.35",
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
     "@types/suncalc": "^1.9.2",
+    "@types/three": "^0.186.0",
     "vitest": "^4.1.10"
   }
 }

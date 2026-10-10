@@ -37,7 +37,15 @@ export default defineNuxtConfig({
         'gsap',
         'gsap/SplitText',
         'ol',
-        'suncalc'
+        'suncalc',
+        // The sky view's scene. Listed so the dev server does not stop to
+        // re-optimise and reload the first time the overlay opens.
+        'three',
+        'three/addons/controls/OrbitControls.js',
+        'three/addons/lines/Line2.js',
+        'three/addons/lines/LineGeometry.js',
+        'three/addons/lines/LineMaterial.js',
+        'three/addons/renderers/CSS2DRenderer.js'
       ]
     }
   },
