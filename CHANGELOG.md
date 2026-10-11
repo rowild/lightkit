@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The sky view marks your place with a target on the ground.** A dot, a ring
+  and four ticks pointing north, east, south and west — the shape of the My
+  place icon — lie flat on the planet, with a ring pulsing outward and a thin
+  line of light above. The glowing dot it replaces sat half inside the planet,
+  so it read as a cut-off half moon.
+
 ## [0.0.14] - 2026-10-11
 
 ### Added

@@ -1,6 +1,6 @@
 /**
  * The bow: the sun's path, the fans from the place to the golden and blue
- * windows with a bright rim along each, the horizon ring and the pin
+ * windows with a bright rim along each, the horizon ring and the place marker
  * (spec 5.7, 7.5 and 7.7).
  */
 import * as THREE from 'three'
@@ -28,6 +28,15 @@ import type { SkyLayer } from './types'
 
 const R = BOW_RADIUS
 const O = new THREE.Vector3(...OBSERVER)
+
+/** The place marker's ring radius; the dot, ticks and halo scale with it. */
+const MARKER_RING = 0.036
+/** Width of the marker's ring and ticks. */
+const MARKER_STROKE = 0.0045
+/** Height above the tangent plane, so the marker clears the horizon disc. */
+const MARKER_LIFT = 0.002
+/** Height of the line of light above the place. */
+const MARKER_BEAM = 0.14
 const FAN_TRIANGLES = WINDOW_SAMPLES - 1
 
 const FAN_STYLE: Record<WindowName, { color: string; strength: number }> = {
@@ -222,37 +231,67 @@ export const createBow = (): SkyLayer => {
     group.add(part)
   }
 
-  // The pin, with a ring pulsing outward every three seconds.
+  // The place marker: a target lying flat on the ground - a dot, a ring and four
+  // ticks pointing N, E, S and W, the shape of the "My place" icon - on a soft
+  // halo, with a ring pulsing outward every three seconds and a thin line of
+  // light rising from its centre. All of it lies in the tangent plane at the
+  // place or stands above it, so the planet can never cover part of it. A
+  // camera-facing glow sprite stood here until 2026-10-11: its centre sat on the
+  // surface, so the planet hid its lower half and it read as a cut-off moon.
+  const markerMaterial = () =>
+    new THREE.MeshBasicMaterial({
+      color: PALETTE.pin,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    })
+  const marker = new THREE.Group()
+  // Flat on the ground: the group's local X is east and its local Y is north.
+  marker.rotation.x = -Math.PI / 2
+  marker.position.set(O.x, O.y + MARKER_LIFT, O.z)
+
   const glow = glowTexture()
-  const pinMaterial = new THREE.SpriteMaterial({
-    map: glow,
-    color: PALETTE.pin,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending
-  })
-  const pin = new THREE.Sprite(pinMaterial)
-  pin.scale.setScalar(0.09)
-  pin.position.copy(O)
-  pin.renderOrder = 6
-  const pulseMaterial = new THREE.MeshBasicMaterial({
-    color: PALETTE.pin,
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending
-  })
-  const pulse = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.027, 48), pulseMaterial)
-  pulse.rotation.x = -Math.PI / 2
-  pulse.position.set(O.x, O.y + 0.003, O.z)
-  pulse.renderOrder = 6
-  const stemMaterial = new THREE.LineBasicMaterial({ color: PALETTE.pin, transparent: true, depthWrite: false })
-  const stem = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([O.clone(), O.clone().add(new THREE.Vector3(0, 0.07, 0))]),
-    stemMaterial
+  const haloMaterial = markerMaterial()
+  haloMaterial.map = glow
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(MARKER_RING * 4, MARKER_RING * 4), haloMaterial)
+  const pulseMaterial = markerMaterial()
+  const pulse = new THREE.Mesh(new THREE.RingGeometry(MARKER_RING, MARKER_RING + MARKER_STROKE, 64), pulseMaterial)
+  const reticleMaterial = markerMaterial()
+  const reticle = new THREE.Mesh(
+    new THREE.RingGeometry(MARKER_RING - MARKER_STROKE / 2, MARKER_RING + MARKER_STROKE / 2, 64),
+    reticleMaterial
   )
-  stem.renderOrder = 6
-  group.add(pin, pulse, stem)
+  // Each tick starts at the ring and reaches outward, as on the icon.
+  const tickGeometry = new THREE.PlaneGeometry(MARKER_STROKE, MARKER_RING * 0.45)
+  const reticleTicks = [0, 1, 2, 3].map((quarter) => {
+    const angle = (quarter * Math.PI) / 2
+    const tick = new THREE.Mesh(tickGeometry, reticleMaterial)
+    tick.position.set(Math.sin(angle) * MARKER_RING * 1.22, Math.cos(angle) * MARKER_RING * 1.22, 0)
+    tick.rotation.z = -angle
+    return tick
+  })
+  const dotMaterial = markerMaterial()
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(MARKER_RING * 0.42, 32), dotMaterial)
+  marker.add(halo, pulse, reticle, ...reticleTicks, dot)
+
+  // The line of light fades to nothing at its top: additive, so black is clear.
+  const pin = new THREE.Color(PALETTE.pin)
+  const beamGeometry = new THREE.BufferGeometry().setFromPoints([
+    O.clone(),
+    O.clone().add(new THREE.Vector3(0, MARKER_BEAM, 0))
+  ])
+  beamGeometry.setAttribute('color', new THREE.Float32BufferAttribute([pin.r, pin.g, pin.b, 0, 0, 0], 3))
+  const beamMaterial = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  })
+  const beam = new THREE.Line(beamGeometry, beamMaterial)
+
+  for (const part of [...marker.children, beam]) part.renderOrder = 6
+  group.add(marker, beam)
 
   // Everything that glides.
   const pathPosition = new Morph(PATH_SAMPLES * 3)
@@ -344,10 +383,12 @@ export const createBow = (): SkyLayer => {
       tickMaterial.opacity = 0.18 * opacity * reveal.horizon
       discMaterial.opacity = 0.025 * opacity * reveal.horizon
       const beat = (time % 3) / 3
-      pulse.scale.setScalar(1 + 3 * beat)
-      pulseMaterial.opacity = 0.6 * (1 - beat) * opacity
-      pinMaterial.opacity = opacity
-      stemMaterial.opacity = 0.7 * opacity
+      pulse.scale.setScalar(1 + 2.2 * beat)
+      pulseMaterial.opacity = 0.55 * (1 - beat) * opacity
+      haloMaterial.opacity = 0.5 * opacity
+      reticleMaterial.opacity = 0.85 * opacity
+      dotMaterial.opacity = opacity
+      beamMaterial.opacity = 0.8 * opacity
     },
     dispose() {
       runner.kill()
