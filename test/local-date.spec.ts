@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { toLocalDateString } from '~/utils/localDate'
+import { followToday, toLocalDateString } from '~/utils/localDate'
 
 const originalTz = process.env.TZ
 
@@ -27,5 +27,21 @@ describe('toLocalDateString', () => {
   it('pads month and day to two digits, as <input type="date"> requires', () => {
     process.env.TZ = 'Europe/Vienna'
     expect(toLocalDateString(new Date('2026-01-05T12:00:00+01:00'))).toBe('2026-01-05')
+  })
+})
+
+// Robert's rule (2026-10-11): at midnight the page follows today only while it
+// is showing today. A date picked on purpose - next Saturday's shoot - stays.
+describe('followToday', () => {
+  it('moves a page that shows today on to the new today', () => {
+    expect(followToday('2026-10-11', '2026-10-11', '2026-10-12')).toBe('2026-10-12')
+  })
+
+  it('leaves a date the reader picked alone', () => {
+    expect(followToday('2026-10-17', '2026-10-11', '2026-10-12')).toBe('2026-10-17')
+  })
+
+  it('leaves an emptied date field alone', () => {
+    expect(followToday('', '2026-10-11', '2026-10-12')).toBe('')
   })
 })

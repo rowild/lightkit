@@ -76,7 +76,7 @@
  * with it. Only the resolved theme and the API key are shared, through their own
  * composables, because the layout needs them too.
  */
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import DaySchedule from '../components/DaySchedule.vue'
 import LightState from '../components/LightState.vue'
 import WeatherWidget from '../components/WeatherWidget.vue'
@@ -85,7 +85,8 @@ import LocationPicker from '../components/LocationPicker.vue'
 import { useWeather } from '../composables/useWeather'
 import { useTheme } from '../composables/useTheme'
 import { usePersistedRef, readPersisted } from '../composables/usePersistedRef'
-import { toLocalDateString } from '../utils/localDate'
+import { useNow } from '../composables/useNow'
+import { followToday, toLocalDateString } from '../utils/localDate'
 
 // This tool now fits one screen at every size, so the shell may cap its own
 // height and keep the footer on the bottom edge instead of below the fold.
@@ -98,6 +99,23 @@ const { isDark } = useTheme()
 // The date always opens on today; a remembered date would be stale by morning.
 // Today on the reader's own calendar, not in UTC (see toLocalDateString).
 const dateStr = ref(toLocalDateString(new Date()))
+
+// An open page follows today across midnight, but only while it is showing
+// today: a date picked on purpose stays (see followToday). Checked once a
+// minute, and as soon as a phone or laptop that slept shows the page again.
+let lastToday = dateStr.value
+const checkToday = () => {
+  const today = toLocalDateString(new Date())
+  if (today === lastToday) return
+  dateStr.value = followToday(dateStr.value, lastToday, today)
+  lastToday = today
+}
+watch(useNow(60_000), checkToday)
+const onVisibility = () => {
+  if (!document.hidden) checkToday()
+}
+onMounted(() => document.addEventListener('visibilitychange', onVisibility))
+onUnmounted(() => document.removeEventListener('visibilitychange', onVisibility))
 
 // Location is remembered, because picking a spot on the map is a real choice.
 // Default is Reykjavik, Iceland until the browser or the user says otherwise.
