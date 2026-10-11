@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.15] - 2026-10-11
+
 ### Changed
 
 - **The sky view marks your place with a target on the ground.** A dot, a ring

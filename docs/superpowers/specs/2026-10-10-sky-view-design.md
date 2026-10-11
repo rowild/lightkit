@@ -382,8 +382,13 @@ phone for a look the sprites already give.
 
 ### 7.7 The pin
 
-A small bright point at O, a short vertical stem, and a ring that pulses
-outward every three seconds.
+A target lying flat on the ground at O (changed 2026-10-11, at Robert's
+request): a bright dot, a thin ring and four short ticks pointing N, E, S and W
+— the shape of the My place icon — on a soft halo, with a ring that pulses
+outward every three seconds and a thin line of light rising above it. All of it
+lies in the tangent plane at O or stands above it. The first version was a
+camera-facing glow sprite centred on the surface, and the planet hid its lower
+half.
 
 ### 7.8 Stars
 
