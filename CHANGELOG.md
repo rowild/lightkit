@@ -2,6 +2,46 @@
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-10-11
+
+### Added
+
+- **The sky view: the day in 3D.** The orbit button in the Day Schedule header
+  opens a full-screen view of a small planet with your place on top. The sun's
+  path for the day stands over it as a bow, and fans of amber and cyan light
+  reach from the place to the parts of the bow where the light is golden or
+  blue. A low, flat bow shows at a glance why golden hour lasts longer in
+  Reykjavík than in Quito.
+- **Two bows and two planets.** Sky path draws the sun's true path across the
+  sky; Clock bends the Day Schedule into a half circle, morning on the left, and
+  the two glide into each other. Earth is NASA's Blue Marble by day and Black
+  Marble city lights by night; Dots draws the land as a field of petrol dots.
+  Both planets glow along the bands where golden and blue hour are happening,
+  and both choices are remembered.
+- **The sun's strengths.** A bead marks every full hour, larger and brighter
+  the higher the sun stands. The sun itself sits at the current moment on
+  today's date and moves live; on any other date it marks solar noon. Every
+  golden and blue fan carries its times at its tip.
+- **Explore other places without losing your own.** Tap the planet or search by
+  name: the planet rolls the new place to the top and the bow morphs into its
+  day. My place jumps back, and closing the view leaves the solar page and your
+  saved location exactly as they were.
+- **An open solar page follows today across midnight** — but only while it is
+  showing today. A date you picked on purpose stays where you put it.
+
+### Changed
+
+- **The map and the sky view share one place search.** Same requests and the
+  same names as before; a slow answer for an earlier search can no longer
+  overwrite a newer one.
+- **Tooltips open on keyboard focus only.** A dialog that moves the focus to its
+  close button no longer pops that button's tooltip every time it opens.
+
+### Fixed
+
+- **The solar page opens on today's date around midnight.** It read the date in
+  UTC, so in Vienna it opened on yesterday's date between 00:00 and 02:00.
+
 ## [0.0.13] - 2026-08-23
 
 ### Added

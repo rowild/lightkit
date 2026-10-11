@@ -126,6 +126,41 @@ already — noted against each so nobody starts from scratch.
       local scene, and is flat ground plus object height enough for the cases
       pilots actually care about? See the shadow research below.
 
+      *Since 2026-10-11 the project already ships three.js*, lazily, for the
+      sky view (`app/utils/sky/`). A local shadow scene could reuse its renderer
+      setup, its sun direction from SunCalc (`skyDirection` in
+      `app/utils/skyGeometry.ts`) and its globe math, without a second engine.
+
+## Left open by the sky view — 2026-10-11
+
+Found while building and reviewing the sky view, and deliberately not done
+then. None of them blocks it.
+
+- [ ] **Back on a phone leaves the page instead of closing the overlay.** In a
+      standalone PWA started at `/solar` it even exits the app. `InfoModal` does
+      the same. A same-URL history entry while a dialog is open, closed on
+      `popstate`, keeps the "no URL for the view" decision.
+- [ ] **Enter in a search field does not pick the first result** — on the map
+      and in the sky view alike.
+- [ ] **No focus trap behind the overlays.** `SkyView` and `InfoModal` set
+      `aria-modal`, but Tab can still reach the page behind them. One app-wide
+      fix with `inert` covers both.
+- [ ] **Rapid taps on the planet can exceed Nominatim's one request per
+      second.** Old answers are dropped, but the requests are still sent.
+      Debounce the name lookup by about a second.
+- [ ] **Time labels assume a 60 px top bar.** On a notched phone in standalone
+      mode the bar is taller, and the bottom bar (taller with a polar note) is
+      not avoided at all. Measure both bars instead.
+- [ ] **A label can hop while the camera is dragged.** The placement search
+      starts afresh every frame; keeping the previous spot while it is still
+      free would stop it.
+- [ ] **The switches are `role="radio"` without arrow keys.** `aria-pressed`
+      toggle buttons are the cheapest honest fix.
+- [ ] **A day whose sun never climbs above 6° names its one golden window
+      "Evening Golden Hour"** (Longyearbyen in October). That is the segment
+      model in `useSun.ts` picking morning or evening by the midpoint — a naming
+      question for the whole app, not the sky view.
+
 ## ND tool: ambient conditions (EV) dial — deferred 2026-08-16
 
 Split out of the dial redesign,

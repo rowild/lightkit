@@ -164,6 +164,10 @@ question about the interface instead. A remembered choice still wins.
 Tile URLs keep the `{z}/{x}/{y}` templates the service worker matches on by
 hostname, so cached tiles survive. Subdomains use OL's `{a-d}` syntax.
 
+The search field's requests live in `app/composables/usePlaceSearch.ts`, shared
+with the sky view's search since 2026-10-10, so the two cannot drift apart. The
+map keeps its own markup and only aliases the composable's names.
+
 ## Weather
 
 **The picture goes on the map, the numbers go on one line, the detail goes in a
@@ -430,6 +434,11 @@ nothing is the phone in the field where the explanation is needed most.
     `overflow: hidden` its parent has — and the map crops its own chrome.
 *   The surface is `--color-ink`, so it inverts with the theme by itself and
     stays legible over a satellite photograph, which has no palette to rely on.
+*   **Focus opens it only when it is keyboard focus** (`:focus-visible`). A
+    dialog that moves the focus to its close button after a click must not pop
+    that button's tooltip; tabbing to it still shows the label at once. Added
+    2026-10-11, when the sky view's close button showed its tooltip on every
+    opening.
 
 ## Attribution
 
@@ -521,6 +530,18 @@ another's, and a module-level ref would leak between requests under SSR.
 a desktop, and inside a dialog behind the **Light windows** link on a phone,
 where the four blocks a pilot came for must fit one screen.
 
+## Today is the reader's today
+
+The solar page opens on `toLocalDateString(new Date())` from
+`app/utils/localDate.ts`, never on `toISOString()`. That one is UTC: in Vienna it
+opened the page on yesterday's date between 00:00 and 02:00, which the sky view
+then read as "another date", so its sun stood still at noon.
+
+An open page follows today across midnight — checked once a minute, and again
+when the tab becomes visible after a phone or laptop slept — **but only while it
+is showing today** (`followToday`). Robert's rule, 2026-10-11: a date picked on
+purpose, such as next Saturday's shoot, must not jump away at midnight.
+
 ## Sky view
 
 The orbit button in the Day Schedule header opens a full-screen 3D view of the
@@ -535,6 +556,17 @@ each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
     Robert's rule: comparing places must not overwrite a launch site.
 *   **Fan times come from `getSolarSegments()`**, and the planet's twilight
     bands from `SOLAR_ALTITUDES`. The view must never disagree with the bar.
+    Its polar-day and polar-night note is `useSun().getPolarExplanation()`,
+    the same words `LightWindows` shows.
+*   **Its images are ours.** `public/textures/` holds the NASA Earth day and
+    night images and the land mask the dot globe reads; `SOURCES.md` there
+    records each source and the rebuild commands (`scripts/build-land-mask.mjs`
+    plus ImageMagick). Same origin, so the service worker caches them the first
+    time the view opens. A first opening offline falls back to Dots with a note.
+*   **Time labels sit at their fan tips in screen space**, a fixed number of
+    pixels out from the tip, stepping aside for the pin, the sun, the planet and
+    each other (`app/utils/sky/labels.ts`). Fixed world-space offsets were tried
+    first: they collided on a phone and floated 100 px away on a desktop.
 *   **There is no time scrubber, on purpose.** On one place the fans already
     show the whole day; changing the place is what shows something new.
 *   **The Clock's sun wraps; the Day Schedule needle stops.** The bar's needle
@@ -588,8 +620,9 @@ under SSR:
 ref with localStorage under the `dpt:` namespace. Remembered today: basemap,
 location, and the ND tool's metered reading, frame rate, shutter
 angle, target mode, selected gear (`dpt:nd-gear`) and whether the outcomes
-table is expanded to show every filter (`dpt:nd-show-all-filters`). Theme uses
-its own older `color-theme` key.
+table is expanded to show every filter (`dpt:nd-show-all-filters`), and the sky
+view's bow and planet (`dpt:sky-bow`, `dpt:sky-planet`). Theme uses its own
+older `color-theme` key.
 
 `dpt:nd-gear` stores a `GearEntry.id` from `app/data/gear.ts`. Those ids are
 persisted on real devices, so an id must never be renamed in place — a rename
