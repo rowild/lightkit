@@ -577,6 +577,11 @@ each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
     the tangent plane at the place, the shape of the My place icon. Nothing
     there may be a camera-facing sprite: centred on the surface, the planet
     hides its lower half, which is what the first marker did until 2026-10-11.
+*   **Darkness is painted with normal blending, never additive.** Added black
+    adds nothing, so the eclipsed sun's black glow and disc use
+    `NormalBlending` with a black or near-black colour, drawn after what they
+    must darken (render order 6.1–6.3 in `beads.ts`). This only works because
+    the canvas is opaque; on a transparent canvas it would turn to black holes.
 *   **The stage is always dark**, via `data-theme="dark"` on the overlay root.
 *   **Three.js is imported only when the view opens**, from `app/utils/sky/`.
     `SkyView.vue` reaches it through `import()` and `import type` only. Keep it

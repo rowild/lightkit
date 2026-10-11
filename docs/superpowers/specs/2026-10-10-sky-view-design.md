@@ -361,7 +361,10 @@ amber and cyan.
   at night.
 * **Sun:** a bright core sprite, a large soft glow sprite and a faint ray
   sprite turning slowly. Colour from the sun-core ramp in 7.2 by altitude.
-  Below the horizon in the sky layout, only a faint ring marks where it is.
+  Below the horizon, on either bow, it is eclipsed (changed 2026-10-11, at
+  Robert's request): a dark disc in a black glow that dims the light behind
+  it, rimmed by a thin corona whose colour follows the depth — lilac in
+  twilight, cyan in blue hour, indigo into the night, fainter as it sinks.
 * **Labels:** `CSS2DRenderer` objects. One per golden and blue fan, reading
   `19:12–19:58` in `.t-num-xs`, in the fan's colour. Each is anchored at its
   fan's tip (the window's middle on the bow) and set off in screen space: a

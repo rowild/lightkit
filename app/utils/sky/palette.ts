@@ -17,7 +17,9 @@ export const PALETTE = {
   dotsCore: '#06100f',
   star: '#dbe9ff',
   spaceInner: '#0b1418',
-  spaceOuter: '#05080a'
+  spaceOuter: '#05080a',
+  /** The eclipsed sun's disc: a shade darker than space, so it shows against it. */
+  eclipse: '#010203'
 } as const
 
 /** Path and bead colour for each kind of light. */
@@ -59,18 +61,47 @@ const SUN_STOPS: ReadonlyArray<readonly [number, string]> = [
 ]
 const scratch = new THREE.Color()
 
-/** The sun's colour at an altitude: white high up, deep orange on the horizon. */
-export const sunColor = (alt: number, target = new THREE.Color()): THREE.Color => {
-  const first = SUN_STOPS[0]!
+/** A colour read off a ramp of [altitude, colour] stops, held at both ends. */
+const rampColor = (
+  stops: ReadonlyArray<readonly [number, string]>,
+  alt: number,
+  target: THREE.Color
+): THREE.Color => {
+  const first = stops[0]!
   if (alt <= first[0]) return target.set(first[1])
-  for (let i = 1; i < SUN_STOPS.length; i++) {
-    const [a1, c1] = SUN_STOPS[i]!
+  for (let i = 1; i < stops.length; i++) {
+    const [a1, c1] = stops[i]!
     if (alt <= a1) {
-      const [a0, c0] = SUN_STOPS[i - 1]!
+      const [a0, c0] = stops[i - 1]!
       return target.set(c0).lerp(scratch.set(c1), (alt - a0) / (a1 - a0))
     }
   }
-  return target.set(SUN_STOPS[SUN_STOPS.length - 1]![1])
+  return target.set(stops[stops.length - 1]![1])
+}
+
+/** The sun's colour at an altitude: white high up, deep orange on the horizon. */
+export const sunColor = (alt: number, target = new THREE.Color()): THREE.Color =>
+  rampColor(SUN_STOPS, alt, target)
+
+/** The eclipsed sun's corona by depth: lilac in twilight, cyan through blue hour, indigo into the night. */
+const CORONA_STOPS: ReadonlyArray<readonly [number, string]> = [
+  [-18, '#3a4c96'],
+  [-12, '#4f68c2'],
+  [-6, PALETTE.blue],
+  [0, KIND_COLORS.twilight]
+]
+/** Corona strength once night is full at −18°: fainter, never gone, so the sun can still be found. */
+const CORONA_NIGHT_STRENGTH = 0.5
+
+/**
+ * The corona of the sun below the horizon, colour already multiplied by its
+ * strength: full at the horizon, fading to CORONA_NIGHT_STRENGTH at −18° and
+ * holding there.
+ */
+export const coronaColor = (alt: number, target = new THREE.Color()): THREE.Color => {
+  const depth = Math.min(0, Math.max(-18, alt))
+  const strength = CORONA_NIGHT_STRENGTH + (1 - CORONA_NIGHT_STRENGTH) * (1 + depth / 18)
+  return rampColor(CORONA_STOPS, depth, target).multiplyScalar(strength)
 }
 
 const DAY_LOW = new THREE.Color('#ffd27a')

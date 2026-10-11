@@ -42,12 +42,31 @@ export const raysTexture = () =>
     }
   })
 
-/** A thin circle: where the sun is while it is below the horizon. */
-export const ringTexture = () =>
+/** A solid disc with a soft edge: the sun's face while it is eclipsed below the horizon. */
+export const discTexture = () =>
   draw(128, (ctx, s) => {
-    ctx.strokeStyle = 'rgba(255,255,255,0.95)'
-    ctx.lineWidth = s * 0.05
-    ctx.beginPath()
-    ctx.arc(s / 2, s / 2, s * 0.36, 0, Math.PI * 2)
-    ctx.stroke()
+    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2)
+    g.addColorStop(0, 'rgba(255,255,255,1)')
+    g.addColorStop(0.9, 'rgba(255,255,255,1)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, s, s)
+  })
+
+/**
+ * An eclipse corona: clear in the middle, where the disc covers it, brightest
+ * right at the disc's edge, then falling away. `inner` is the disc's radius as
+ * a share of this texture's radius.
+ */
+export const coronaTexture = (inner: number) =>
+  draw(256, (ctx, s) => {
+    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2)
+    g.addColorStop(0, 'rgba(255,255,255,0)')
+    g.addColorStop(inner - 0.03, 'rgba(255,255,255,0)')
+    g.addColorStop(inner, 'rgba(255,255,255,1)')
+    g.addColorStop(inner + 0.07, 'rgba(255,255,255,0.45)')
+    g.addColorStop(inner + 0.28, 'rgba(255,255,255,0.12)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, s, s)
   })

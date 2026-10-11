@@ -9,6 +9,11 @@
   place icon — lie flat on the planet, with a ring pulsing outward and a thin
   line of light above. The glowing dot it replaces sat half inside the planet,
   so it read as a cut-off half moon.
+- **Below the horizon the sun is eclipsed.** Instead of a thin circle, the sun
+  becomes a dark disc in a black glow that swallows the light behind it,
+  rimmed by a thin corona: cyan in blue hour, indigo deeper into the night,
+  fainter the further it sinks. The Clock shows the same eclipse, so a dark sun
+  always means night there too, where it used to stay a red sun.
 
 ## [0.0.14] - 2026-10-11
 

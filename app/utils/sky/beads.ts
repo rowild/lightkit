@@ -8,12 +8,23 @@ import type gsap from 'gsap'
 import { OBSERVER, layoutPoint, visibilityOnBow, type BowMode, type SkyModel, type SkySample } from '../skyGeometry'
 import { disposeTree } from './dispose'
 import { Morph, createMorphRunner } from './morph'
-import { beadColor, sunColor } from './palette'
-import { glowTexture, raysTexture, ringTexture } from './textures'
+import { PALETTE, beadColor, coronaColor, sunColor } from './palette'
+import { coronaTexture, discTexture, glowTexture, raysTexture } from './textures'
 import type { SkyLayer } from './types'
 
 /** Room for every full hour of a span, with a spare. */
 const BEAD_SLOTS = 26
+
+/** The eclipsed sun's disc, a little smaller than the day sun's core glow. */
+const ECLIPSE_DISC = 0.2
+/** The corona sprite; its bright edge sits exactly on the disc's rim. */
+const CORONA_SIZE = 0.66
+/** The black glow round the eclipse, and how much light it swallows. */
+const SHADE_SIZE = 1.3
+const SHADE_OPACITY = 0.8
+/** Faint streamers turning slowly the other way from the day sun's rays. */
+const STREAMER_SIZE = 0.95
+const STREAMER_OPACITY = 0.16
 
 const BEAD_VERTEX = /* glsl */ `
   attribute vec3 aColor;
@@ -53,7 +64,7 @@ export const createBeads = (): SkyLayer => {
   let mode: BowMode = 'sky'
   let sample: SkySample | null = null
   let opacity = 1
-  let sunVisible = 1
+  let sunUp = 1
   const reveal = { beads: 1, sun: 1 }
 
   // The beads.
@@ -81,24 +92,33 @@ export const createBeads = (): SkyLayer => {
   beads.renderOrder = 5
   group.add(beads)
 
-  // The sun: a core, a breathing halo, slow rays, and a ring for when it is down.
+  // The sun. Up: a core, a breathing halo and slow rays. Down, on either bow:
+  // an eclipse - a dark disc in a black glow that swallows the light behind it,
+  // rimmed by a thin corona whose colour says how deep the sun has sunk.
   const glow = glowTexture()
   const rays = raysTexture()
-  const ring = ringTexture()
-  const sprite = (map: THREE.Texture, size: number) => {
-    const s = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })
-    )
+  const disc = discTexture()
+  const corona = coronaTexture(ECLIPSE_DISC / CORONA_SIZE)
+  const sprite = (map: THREE.Texture, size: number, blending: THREE.Blending, order: number) => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, blending }))
     s.scale.setScalar(size)
-    s.renderOrder = 6
+    s.renderOrder = order
     return s
   }
-  const halo = sprite(glow, 0.9)
-  const sunRays = sprite(rays, 1.0)
-  const core = sprite(glow, 0.24)
-  const marker = sprite(ring, 0.12)
+  const halo = sprite(glow, 0.9, THREE.AdditiveBlending, 6)
+  const sunRays = sprite(rays, 1.0, THREE.AdditiveBlending, 6)
+  const core = sprite(glow, 0.24, THREE.AdditiveBlending, 6)
+  // Drawn after the fans, the path and the beads, so it can darken them. Normal
+  // blending, because adding black adds nothing: darkness has to cover light.
+  const shade = sprite(glow, SHADE_SIZE, THREE.NormalBlending, 6.1)
+  shade.material.color.set(0x000000)
+  const eclipse = sprite(disc, ECLIPSE_DISC, THREE.NormalBlending, 6.2)
+  eclipse.material.color.set(PALETTE.eclipse)
+  const coronaGlow = sprite(corona, CORONA_SIZE, THREE.AdditiveBlending, 6.3)
+  // Before the disc, so its face stays black; after the shade, so they still shine.
+  const streamers = sprite(rays, STREAMER_SIZE, THREE.AdditiveBlending, 6.15)
   const sun = new THREE.Group()
-  sun.add(halo, sunRays, core, marker)
+  sun.add(halo, sunRays, core, shade, eclipse, coronaGlow, streamers)
   group.add(sun)
 
   // Everything that glides.
@@ -106,8 +126,10 @@ export const createBeads = (): SkyLayer => {
   const beadTint = new Morph(BEAD_SLOTS * 3)
   const beadSize = new Morph(BEAD_SLOTS)
   const sunPosition = new Morph(3)
-  /** r, g, b, and how visible the sun is (1 up, 0 down on the sky path). */
+  /** r, g, b, and how far the sun is up: 1 above the horizon, 0 eclipsed below it. */
   const sunState = new Morph(4)
+  /** The corona's r, g, b, already multiplied by its strength. */
+  const coronaState = new Morph(3)
 
   const write = () => {
     ;(positionAttribute.array as Float32Array).set(beadPosition.current)
@@ -117,17 +139,26 @@ export const createBeads = (): SkyLayer => {
     colorAttribute.needsUpdate = true
     sizeAttribute.needsUpdate = true
     sun.position.fromArray(sunPosition.current)
-    const [r, g, b, visible] = sunState.current
+    const [r, g, b, up] = sunState.current
     for (const s of [halo, sunRays, core]) s.material.color.setRGB(r!, g!, b!)
-    sunVisible = visible!
+    sunUp = up!
+    const [cr, cg, cb] = coronaState.current
+    for (const s of [coronaGlow, streamers]) s.material.color.setRGB(cr!, cg!, cb!)
   }
-  const runner = createMorphRunner([beadPosition, beadTint, beadSize, sunPosition, sunState], write)
+  const runner = createMorphRunner([beadPosition, beadTint, beadSize, sunPosition, sunState, coronaState], write)
 
   const sunTargets = () => {
     if (!model || !sample) return null
     sunColor(sample.alt, color)
-    const visible = mode === 'clock' ? 1 : THREE.MathUtils.smoothstep(sample.alt, -1.5, 1)
-    return { position: layoutPoint(sample, mode, model.southern), state: [color.r, color.g, color.b, visible] }
+    // The same on both bows: on the clock too, a dark sun means it is night.
+    const up = THREE.MathUtils.smoothstep(sample.alt, -1.5, 1)
+    const state = [color.r, color.g, color.b, up]
+    coronaColor(sample.alt, color)
+    return {
+      position: layoutPoint(sample, mode, model.southern),
+      state,
+      corona: [color.r, color.g, color.b]
+    }
   }
 
   const retarget = (duration: number) => {
@@ -159,6 +190,7 @@ export const createBeads = (): SkyLayer => {
     if (target) {
       sunPosition.retarget(target.position)
       sunState.retarget(target.state)
+      coronaState.retarget(target.corona)
     }
     runner.run(duration)
   }
@@ -182,11 +214,14 @@ export const createBeads = (): SkyLayer => {
       if (runner.running) {
         sunPosition.aim(target.position)
         sunState.aim(target.state)
+        coronaState.aim(target.corona)
       } else {
         sunPosition.retarget(target.position)
         sunState.retarget(target.state)
+        coronaState.retarget(target.corona)
         sunPosition.apply(1)
         sunState.apply(1)
+        coronaState.apply(1)
         write()
       }
     },
@@ -206,20 +241,28 @@ export const createBeads = (): SkyLayer => {
       material.uniforms.uReveal!.value = -0.05 + reveal.beads * 1.1
       material.uniforms.uOpacity!.value = opacity
       const shown = opacity * Math.min(1, reveal.sun)
+      const breath = Math.sin((time * Math.PI * 2) / 4)
       sun.scale.setScalar(Math.max(1e-4, reveal.sun))
-      halo.scale.setScalar(0.9 * (1 + 0.04 * Math.sin((time * Math.PI * 2) / 4)))
+      halo.scale.setScalar(0.9 * (1 + 0.04 * breath))
       sunRays.material.rotation = time * 0.05
-      core.material.opacity = sunVisible * shown
-      halo.material.opacity = 0.55 * sunVisible * shown
-      sunRays.material.opacity = 0.2 * sunVisible * shown
-      marker.material.opacity = 0.4 * (1 - sunVisible) * shown
+      core.material.opacity = sunUp * shown
+      halo.material.opacity = 0.55 * sunUp * shown
+      sunRays.material.opacity = 0.2 * sunUp * shown
+      // The corona breathes in brightness, not size, so it stays on the disc's edge.
+      const down = (1 - sunUp) * shown
+      shade.material.opacity = SHADE_OPACITY * down
+      eclipse.material.opacity = down
+      coronaGlow.material.opacity = (0.9 + 0.1 * breath) * down
+      streamers.material.rotation = -time * 0.03
+      streamers.material.opacity = STREAMER_OPACITY * down
     },
     dispose() {
       runner.kill()
       disposeTree(group)
       glow.dispose()
       rays.dispose()
-      ring.dispose()
+      disc.dispose()
+      corona.dispose()
     }
   }
 }
