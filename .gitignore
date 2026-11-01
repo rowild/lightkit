@@ -28,6 +28,7 @@ logs
 # Private local material and backups
 _MATERIAL/
 _BU/
+.serena
 
 # wrangler files
 .wrangler
