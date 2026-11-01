@@ -24,13 +24,7 @@ already — noted against each so nobody starts from scratch.
       Run Lighthouse's PWA audit and fix what it names, rather than rebuilding
       what exists.
 
-- [ ] **A start page showing the tools as cards.** `/` currently redirects
-      straight to the first entry in `app/data/tools.ts`, which was deliberate —
-      it stopped any one tool being the accidental default — but it also means
-      a visitor never sees that there is more than one. Cards would carry the
-      `note` and `about` copy each tool already has in `tools.ts`. Watch the
-      routing rule in AGENTS.md: every tool keeps its own URL, and the start
-      page must not become a second source of truth about which tools exist.
+- [x] **A start page showing the tools as cards.** Done 2026-11-01.
 
 - [ ] **"Will there be shadow when we want to be there?" — the next mini app,
       and the most important one.** A 3D view that takes the sun's real position
@@ -130,6 +124,16 @@ already — noted against each so nobody starts from scratch.
       sky view (`app/utils/sky/`). A local shadow scene could reuse its renderer
       setup, its sun direction from SunCalc (`skyDirection` in
       `app/utils/skyGeometry.ts`) and its globe math, without a second engine.
+
+## Left open by the start page — 2026-11-01
+
+- [ ] **Should the sky view remember that it was closed?** It opens on every
+      entry to `/solar`, as asked, so someone who only wants the map closes it
+      every time, and a phone downloads three.js and the Earth images on the first
+      visit whether they wanted them or not. Remembering the close for the session
+      would answer both.
+- [ ] **`.disclosure-summary` in `main.css` has no users.** Left in place because
+      nothing was to be deleted in that session.
 
 ## Left open by the sky view — 2026-10-11
 

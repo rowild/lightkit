@@ -56,20 +56,14 @@
               <div class="flex-grow overflow-y-auto space-y-4 py-6 pr-1 select-none">
                 
                 <!-- ACCORDION 1: WEATHER API KEYS (BYOK) -->
-                <div class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4">
-                  <button
-                    @click="toggleSection('api')"
-                    class="tap w-full flex items-center justify-between gap-3 py-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity"
-                  >
-                    <span class="flex items-center space-x-2.5">
-                      <Key :size="14" :stroke-width="1.5" />
-                      <span>Weather API key</span>
-                    </span>
-                    <component :is="activeSection === 'api' ? ChevronUp : ChevronDown" :size="14" :stroke-width="1.5" />
-                  </button>
-
-                  <Transition name="slide">
-                    <div v-show="activeSection === 'api'" class="mt-2 flex flex-col gap-3 pl-6 t-body-sm">
+                <AccordionItem
+                  title="Weather API key"
+                  :open="activeSection === 'api'"
+                  class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4"
+                  @update:open="toggleSection('api')"
+                >
+                  <template #icon><Key :size="14" :stroke-width="1.5" /></template>
+                  <div class="mt-2 flex flex-col gap-3 pl-6 t-body-sm">
                       <p>
                         Live wind speed, gust force, cloud cover, humidity, precipitation and pressure come from OpenWeatherMap. The key is stored in this browser only.
                       </p>
@@ -118,27 +112,20 @@
                         </button>
                       </div>
                     </div>
-                  </Transition>
-                </div>
+                </AccordionItem>
 
                 <!-- ACCORDION 2: WEATHER OVERLAY STRENGTH -->
                 <!-- Here rather than on the map: how heavy the clouds are drawn
                      is a taste you set once, not a control you reach for while
                      planning a flight. The map keeps only the switch. -->
-                <div class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4">
-                  <button
-                    @click="toggleSection('overlay')"
-                    class="tap w-full flex items-center justify-between gap-3 py-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity"
-                  >
-                    <span class="flex items-center space-x-2.5">
-                      <Cloud :size="14" :stroke-width="1.5" />
-                      <span>Weather overlay</span>
-                    </span>
-                    <component :is="activeSection === 'overlay' ? ChevronUp : ChevronDown" :size="14" :stroke-width="1.5" />
-                  </button>
-
-                  <Transition name="slide">
-                    <div v-show="activeSection === 'overlay'" class="mt-2 flex flex-col gap-4 pl-6 t-body-sm">
+                <AccordionItem
+                  title="Weather overlay"
+                  :open="activeSection === 'overlay'"
+                  class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4"
+                  @update:open="toggleSection('overlay')"
+                >
+                  <template #icon><Cloud :size="14" :stroke-width="1.5" /></template>
+                  <div class="mt-2 flex flex-col gap-4 pl-6 t-body-sm">
                       <p>
                         How strongly each layer is painted over the map. Lower it
                         to keep the ground readable underneath.
@@ -161,24 +148,17 @@
                         />
                       </div>
                     </div>
-                  </Transition>
-                </div>
+                </AccordionItem>
 
                 <!-- ACCORDION 3: PRE-FLIGHT UAV SAFETY CHECKLIST -->
-                <div class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4">
-                  <button
-                    @click="toggleSection('safety')"
-                    class="tap w-full flex items-center justify-between gap-3 py-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity"
-                  >
-                    <span class="flex items-center space-x-2.5">
-                      <ShieldCheck :size="14" :stroke-width="1.5" />
-                      <span>Pre-flight checklist</span>
-                    </span>
-                    <component :is="activeSection === 'safety' ? ChevronUp : ChevronDown" :size="14" :stroke-width="1.5" />
-                  </button>
-
-                  <Transition name="slide">
-                    <div v-show="activeSection === 'safety'" class="mt-2 flex flex-col gap-1 pl-6 t-body-sm">
+                <AccordionItem
+                  title="Pre-flight checklist"
+                  :open="activeSection === 'safety'"
+                  class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4"
+                  @update:open="toggleSection('safety')"
+                >
+                  <template #icon><ShieldCheck :size="14" :stroke-width="1.5" /></template>
+                  <div class="mt-2 flex flex-col gap-1 pl-6 t-body-sm">
                       <div v-for="(item, idx) in checklist" :key="idx" class="flex items-start gap-2 py-1.5">
                         <input
                           type="checkbox"
@@ -190,24 +170,17 @@
                         </label>
                       </div>
                     </div>
-                  </Transition>
-                </div>
+                </AccordionItem>
 
                 <!-- ACCORDION 4: SYSTEM CACHE & RESET -->
-                <div class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4">
-                  <button
-                    @click="toggleSection('system')"
-                    class="tap w-full flex items-center justify-between gap-3 py-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity"
-                  >
-                    <span class="flex items-center space-x-2.5">
-                      <RotateCcw :size="14" :stroke-width="1.5" />
-                      <span>System utilities</span>
-                    </span>
-                    <component :is="activeSection === 'system' ? ChevronUp : ChevronDown" :size="14" :stroke-width="1.5" />
-                  </button>
-
-                  <Transition name="slide">
-                    <div v-show="activeSection === 'system'" class="mt-2 flex flex-col gap-3 pl-6 t-body-sm">
+                <AccordionItem
+                  title="System utilities"
+                  :open="activeSection === 'system'"
+                  class="border-b border-brand-petrol-800/10 dark:border-brand-green-800/10 pb-4"
+                  @update:open="toggleSection('system')"
+                >
+                  <template #icon><RotateCcw :size="14" :stroke-width="1.5" /></template>
+                  <div class="mt-2 flex flex-col gap-3 pl-6 t-body-sm">
                       <p>Clear all locally cached parameters, including the OpenWeatherMap API key and theme preferences, to reset LightKit to factory default.</p>
                       <button
                         @click="resetSystem"
@@ -216,8 +189,7 @@
                         Reset system data
                       </button>
                     </div>
-                  </Transition>
-                </div>
+                </AccordionItem>
 
               </div>
             </div>
@@ -236,14 +208,13 @@ import {
   X,
   Eye,
   EyeOff,
-  ChevronDown,
-  ChevronUp,
   Key,
   ShieldCheck,
   RotateCcw,
   Sun,
   Cloud
 } from '@lucide/vue'
+import AccordionItem from './AccordionItem.vue'
 import { useWeatherOverlay, WEATHER_LAYERS } from '../composables/useWeatherOverlay'
 
 const { opacity, restore: restoreOverlay, setOpacity } = useWeatherOverlay()
@@ -273,7 +244,7 @@ const showKey = ref(false)
 const inputKey = ref('')
 const savedMessage = ref(false)
 
-// Accordion open/close tracker
+// One section open at a time.
 const activeSection = ref<string | null>('api')
 
 const checklist = [
@@ -320,18 +291,3 @@ const resetSystem = () => {
 }
 </script>
 
-<style scoped>
-/* Accordion smooth transition */
-.slide-enter-active,
-.slide-leave-active {
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-  max-height: 400px;
-  overflow: hidden;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-</style>

@@ -34,7 +34,7 @@
                  move the wordmark sideways on a wide screen the moment the menu
                  opened, which is the one thing this lockup must never do. -->
             <div class="max-w-7xl w-full mx-auto flex flex-col min-h-full pb-6">
-              <Wordmark :subtitle="activeTool.label" :version="version">
+              <Wordmark :subtitle="activeTool?.label" :version="version" @home="isOpen = false">
                 <button
                   @click="isOpen = false"
                   aria-label="Close menu"
@@ -54,6 +54,27 @@
                      the app. The panel is what says "these belong together";
                      spacing alone was not doing it. -->
                 <div class="menu-reveal glass-panel rounded-2xl overflow-hidden" :style="{ '--row-index': 0 }">
+                  <div
+                    class="menu-row group flex items-stretch"
+                    :class="route.path === '/'
+                      ? 'bg-brand-petrol-800/8 dark:bg-brand-green-800/30'
+                      : 'hover:bg-brand-petrol-800/5 dark:hover:bg-brand-green-800/15'"
+                  >
+                    <NuxtLink
+                      to="/"
+                      @click="isOpen = false"
+                      :aria-current="route.path === '/' ? 'page' : undefined"
+                      class="tap grow flex items-center justify-start px-4 py-3.5 text-left cursor-pointer min-w-0"
+                    >
+                      <span
+                        class="font-display font-light text-xl leading-none truncate transition-colors duration-200"
+                        :class="route.path === '/'
+                          ? 'text-brand-glow-amber'
+                          : 'text-ink group-hover:text-brand-petrol-800 dark:group-hover:text-brand-glow'"
+                      >All tools</span>
+                    </NuxtLink>
+                  </div>
+
                   <!-- The link and its info button are siblings, never nested.
                        A <button> inside an <a> is invalid, and its click would
                        bubble into the link and navigate instead of explaining. -->
@@ -61,19 +82,19 @@
                     v-for="tool in tools"
                     :key="tool.id"
                     class="menu-row group flex items-stretch"
-                    :class="tool.id === activeTool.id
+                    :class="tool.id === activeTool?.id
                       ? 'bg-brand-petrol-800/8 dark:bg-brand-green-800/30'
                       : 'hover:bg-brand-petrol-800/5 dark:hover:bg-brand-green-800/15'"
                   >
                     <NuxtLink
                       :to="tool.path"
                       @click="isOpen = false"
-                      :aria-current="tool.id === activeTool.id ? 'page' : undefined"
+                      :aria-current="tool.id === activeTool?.id ? 'page' : undefined"
                       class="tap grow flex items-center justify-start px-4 py-3.5 text-left cursor-pointer min-w-0"
                     >
                       <span
                         class="font-display font-light text-xl leading-none truncate transition-colors duration-200"
-                        :class="tool.id === activeTool.id
+                        :class="tool.id === activeTool?.id
                           ? 'text-brand-glow-amber'
                           : 'text-ink group-hover:text-brand-petrol-800 dark:group-hover:text-brand-glow'"
                       >{{ tool.label }}</span>

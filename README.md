@@ -6,9 +6,10 @@ The toolkit helps identify golden- and blue-hour windows for a selected place an
 
 ## Features
 
+- A start page with a plate for every tool, and the tools still to come in grey
 - Interactive location search and map with world, terrain, night, and day layers
 - Golden hour, blue hour, twilight, sunrise, and sunset calculations
-- A 3D sky view of the day: the sun's path as a bow over a small planet, with fans of light to the golden and blue hours — on the true sky or as a clock, on NASA Earth or a dot globe — and any other place one tap or search away. The sun moves live, and below the horizon it turns into an eclipse whose corona shows how deep it has sunk
+- A 3D sky view of the day, opening by itself with the Solar Planner: the sun's path as a bow over a small planet, with fans of light to the golden and blue hours — on the true sky or as a clock, on NASA Earth or a dot globe — and any other place one tap or search away. The sun moves live, and below the horizon it turns into an eclipse whose corona shows how deep it has sunk
 - The day schedule, the map and the light windows on one phone screen, without scrolling
 - Wind arrows across the visible map, with an optional animated flow, from Open-Meteo — no API key needed
 - Weather overlays for cloud, rain, pressure and temperature, each with its own strength setting
@@ -28,7 +29,7 @@ The toolkit helps identify golden- and blue-hour windows for a selected place an
 - TypeScript
 - Tailwind CSS
 - OpenLayers with OpenStreetMap, CARTO and Esri basemaps
-- Three.js, loaded only when the sky view opens
+- Three.js, loaded only when the sky view opens, which is also when the Solar Planner opens
 - NASA Blue Marble and Black Marble imagery, Natural Earth land outlines
 - SunCalc
 - OpenWeatherMap

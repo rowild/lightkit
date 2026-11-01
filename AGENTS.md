@@ -457,6 +457,32 @@ across the foot of the map was the worst of both. The credit is **required by
 the tile providers**, so it must stay one tap away and must never be removed —
 but one tap is what the rest of this app's secondary text costs too.
 
+## Start page
+
+`pages/index.vue` reads `tools` and `plannedTools` from `app/data/tools.ts` and
+nothing else, so it cannot disagree with the menu about what exists. Building a
+planned tool means moving its entry up into `tools`.
+
+*   **Plates are always dark**, via `data-theme="dark"`, like the sky view: the
+    picture is a night sky and the type sits on it.
+*   **A planned plate is not a link.** A plain `<div>`, with `pointer-events: none`,
+    out of the tab order and greyscale. It must not react to anything.
+*   **Pictures are computed** by `scripts/build-card-art.mjs` into `public/cards/`,
+    and the output is committed. The Solar Planner's samples the NASA textures.
+*   **The animations are SVG in the picture's own coordinates** (1200 x 1000, same
+    crop), so the bow stands on the limb the picture painted. `ToolPlate` pauses
+    them off screen. The hero's curve is today's real sun from `useSun`, at the
+    remembered place; a first visitor gets a place guessed from the time zone,
+    never a location prompt.
+*   **The start page scrolls**, so it does not set `fitViewport`. It hides the
+    header's wordmark and sets the name itself at display size.
+
+## Accordions
+
+`AccordionItem.vue` is the only one. The parent owns `open`, which is how Settings
+keeps one section open at a time. It animates a grid row from `0fr` to `1fr`, so
+it needs no guessed height. Settings guessed 400px with `max-height` before.
+
 ## Secondary text belongs in a modal
 
 *Robert's rule, given twice — for the ND panel and again for the app menu.*
@@ -469,6 +495,10 @@ The reason is that explanatory text does not scale. One note under one menu
 item looks harmless; seven tools means seven notes, and the menu no longer fits
 a phone. The cost only shows up later, which is exactly why it has to be a rule
 rather than a judgement call each time.
+
+The sky view is the one exception, by Robert's request on 2026-11-01: a dialog on
+top of a full-screen stage hides the thing it explains, so its explanation folds
+out under its title in an `AccordionItem` instead.
 
 Use `InfoModal.vue` — a titled dialog with a content slot, teleported to body.
 `PhaseInfoModal.vue` keeps its own file because its content is a structured list
@@ -544,13 +574,22 @@ purpose, such as next Saturday's shoot, must not jump away at midnight.
 
 ## Sky view
 
-The orbit button in the Day Schedule header opens a full-screen 3D view of the
-day: a small planet, the sun's path as a bow over the selected place, and fans
+A full-screen 3D view of the day that **opens by itself on every entry to
+`/solar`** (Robert's rule, 2026-11-01), and comes back through the orbit button in
+the Day Schedule header once closed. It shows a small planet, the sun's path as a bow over the selected place, and fans
 from the place to the golden and blue parts of the bow. Two bows (the true sky
 path, and the bar bent into a clock) and two planets (NASA Earth, a dot globe),
 each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
 `docs/superpowers/specs/2026-10-10-sky-view-design.md`.
 
+*   **An opening nobody asked for stays out of the way** (`openedByItself`). It
+    takes the focus on the dialog rather than the close button, because on a page
+    that just loaded that counts as keyboard focus and pops the tooltip. If the
+    scene fails (no WebGL, first visit offline) it closes itself and leaves the
+    page; only the orbit button gets the explanation.
+*   **It follows a location that arrives late.** A first visit opens the view
+    before the browser answers with a position. The view moves there unless the
+    reader has already gone exploring.
 *   **It explores; it never moves the page.** A place picked in the view stays
     there. Closing it leaves the solar page and `dpt:lat`/`dpt:lng` untouched.
     Robert's rule: comparing places must not overwrite a launch site.
@@ -595,8 +634,12 @@ each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
 ## Routing
 
 Each tool is a page under `app/pages/`, listed once in `app/data/tools.ts` with
-its `path`. `/` redirects to the first tool, so no tool is the accidental
-default and every one has a URL a pilot can bookmark or share.
+its `path`, so every one has a URL a pilot can bookmark or share. `/` is the start
+page (below), not a redirect, and `toolForPath` answers `null` there.
+
+**Never redirect `/` again.** The service worker precaches it, and a browser
+refuses a cached redirect as the answer to a navigation: every returning visitor
+saw an error page at `/` until 2026-11-01, while a clean browser saw nothing wrong.
 
 `app/app.vue` holds only `<NuxtLayout><NuxtPage /></NuxtLayout>`. The chrome —
 background, header, menu, modals, footer, service worker — lives in

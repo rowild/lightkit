@@ -14,7 +14,7 @@
           aria-label="Open the sky view"
           v-tooltip="'Open the sky view'"
           class="tap grid items-center justify-end -my-4 self-center rounded-full text-ink-faint hover:text-brand-petrol-600 dark:hover:text-brand-glow transition-colors cursor-pointer"
-          @click="skyOpen = true"
+          @click="openSky"
         >
           <Orbit :size="16" :stroke-width="1.75" />
         </button>
@@ -106,7 +106,7 @@
     <PhaseInfoModal v-model:open="infoOpen" :highlight="infoPhase" />
 
     <!-- The same day in 3D. Teleported to body; Three.js loads on first open. -->
-    <SkyView v-model:open="skyOpen" :lat="lat" :lng="lng" :date="date" />
+    <SkyView v-model:open="skyOpen" :opened-by-itself="skyOpenedByItself" :lat="lat" :lng="lng" :date="date" />
   </div>
 </template>
 
@@ -117,7 +117,7 @@
  * Split out of `SunTimeline.vue` on 2026-08-17. On a phone the map has to sit
  * between this block and the state cards, which one component cannot do.
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Clock, Orbit } from '@lucide/vue'
 import { useSun, type SolarTimes, type SolarSegment } from '../composables/useSun'
 import { useNow } from '../composables/useNow'
@@ -140,8 +140,19 @@ const segments = computed<SolarSegment[]>(() => sunCalc.getSolarSegments(props.d
 // cannot push the times a pilot is reading off the screen.
 const infoOpen = ref(false)
 const infoPhase = ref<string | null>(null)
-// The sky view overlay. Its own component; this block only owns the button.
+// The sky view overlay. Its own component; this block owns the button and the
+// opening. It opens by itself whenever the solar page is entered (Robert's rule,
+// 2026-11-01), and the button brings it back after it was closed.
 const skyOpen = ref(false)
+const skyOpenedByItself = ref(false)
+const openSky = () => {
+  skyOpenedByItself.value = false
+  skyOpen.value = true
+}
+onMounted(() => {
+  skyOpenedByItself.value = true
+  skyOpen.value = true
+})
 
 const openInfo = (phaseName: string | null) => {
   infoPhase.value = phaseName

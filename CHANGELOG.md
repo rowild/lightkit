@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+## [0.0.16] - 2026-11-01
+
+### Added
+
+- **A start page.** `lightkit.pages.dev` now opens on the project's name and a
+  plate for each tool. Solar Planner and ND Filters are links, each with its own
+  slow animation: a sun crossing a bow over the planet while the air turns gold
+  and then blue, and an eclipse passing over the sun inside a dial of filter
+  strengths. Five tools that do not exist yet sit below them in grey and ignore
+  the mouse. A line at the top shows today's sun and the next golden or blue hour.
+- **The way back.** The LightKit name links to the start page, and the menu has
+  an All tools row.
+
+### Changed
+
+- **The sky view opens by itself when you enter the Solar Planner.** It has a
+  title now, and under that title a folded section says what the view is good
+  for and how to read it. That text used to be behind the ⓘ button, which is
+  gone. Close the view with ✕ and bring it back with the orbit button.
+- **Settings folds the same way as the sky view,** and a long section can no
+  longer be cut off when it opens.
+
+### Fixed
+
+- **`/` no longer fails for returning visitors.** It used to redirect to the
+  Solar Planner, and the offline cache kept that redirect in a form browsers
+  refuse to show.
+
 ## [0.0.15] - 2026-10-11
 
 ### Changed

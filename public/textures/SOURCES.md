@@ -10,8 +10,11 @@ time the sky view opens (same-origin requests are stale-while-revalidate in
 | `earth-night.jpg` | NASA Earth Observatory, Black Marble 2016, 0.1° — https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144898/BlackMarble_2016_01deg.jpg | 2026-10-10 |
 | `land-mask.png` | Natural Earth 1:110m land — https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_land.geojson, rasterised by `scripts/build-land-mask.mjs` | 2026-10-10 |
 
+`public/cards/solar.webp` on the start page samples the two NASA images too; see
+`scripts/build-card-art.mjs`.
+
 NASA imagery is not protected by copyright; NASA asks to be credited, which
-the sky view's ⓘ dialog does. Natural Earth is in the public domain.
+the sky view's title panel does. Natural Earth is in the public domain.
 
 ## Rebuilding
 

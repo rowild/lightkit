@@ -22,7 +22,11 @@ if (self.location.hostname.includes('localhost') || self.location.hostname.inclu
 // list without Plex, and the activate handler deletes any cache whose name is
 // not the current one, so a returning user gets the new set rather than a page
 // missing its text face.
-const CACHE_NAME = 'lightkit-cache-v2';
+//
+// Bumped to v3 when `/` became a real page. It used to redirect to /solar, and
+// the v2 cache holds that redirected response: a browser refuses one as the
+// answer to a navigation, so `/` showed an error page to every returning visitor.
+const CACHE_NAME = 'lightkit-cache-v3';
 // Tile cache is keyed by URL, so it survived the Leaflet -> OpenLayers swap.
 const TILE_CACHE = 'map-tiles';
 const STATIC_ASSETS = [

@@ -3,18 +3,22 @@
     class="flex flex-col justify-between safe-inset"
     :class="fitViewport
       ? 'h-svh max-h-svh overflow-hidden'
-      : 'min-h-svh overflow-x-hidden lg:h-screen lg:max-h-screen lg:overflow-hidden'"
+      : 'min-h-svh overflow-x-hidden'"
   >
     <BackgroundShader :isDark="isDark" />
 
     <div
       class="max-w-7xl w-full mx-auto grow flex flex-col justify-between gap-5 md:gap-6 min-h-0"
-      :class="fitViewport
-        ? 'h-full max-h-full overflow-hidden'
-        : 'lg:h-full lg:max-h-full lg:overflow-hidden'"
+      :class="fitViewport ? 'h-full max-h-full overflow-hidden' : ''"
     >
       <header class="shrink-0 animate-panel">
-        <Wordmark heading :subtitle="activeTool.label" :version="version">
+        <!-- The start page carries the name itself, at display size. -->
+        <Wordmark
+          :heading="!isStartPage"
+          :hide-name="isStartPage"
+          :subtitle="activeTool?.label"
+          :version="version"
+        >
           <AppMenu
             @open-settings="settingsOpen = true"
             @open-about-nd="aboutNdOpen = true"
@@ -47,8 +51,8 @@
            you are in and opens the other two upwards on a tap. No labels -
            three icons for light, dark and system say it themselves. -->
       <!-- shrink-0 so the bar keeps its full height and stays on the bottom
-           edge of the screen. Every tool sets `fitViewport`, so nothing here
-           scrolls past it. -->
+           edge of the screen. Every tool sets `fitViewport`, so nothing there
+           scrolls past it; the start page scrolls and the bar ends the page. -->
       <footer class="shrink-0 pt-3 sm:pt-4 border-t border-brand-petrol-800/10 dark:border-brand-green-800/20 flex items-center justify-between gap-4 t-label-xs animate-panel">
         <span class="normal-case">&copy; 2025-26 by <a href="https://rowild.works" target="_blank" rel="noopener noreferrer" class="text-brand-glow-amber hover:underline font-semibold">rowild.works &mdash; digital studio</a></span>
         <ThemeToggle class="shrink-0" @theme-changed="setDark" />
@@ -114,6 +118,7 @@ const route = useRoute()
 // bookmarked or shared link shows the right name without a second source of
 // truth to keep in step.
 const activeTool = computed(() => toolForPath(route.path))
+const isStartPage = computed(() => route.path === '/')
 
 /**
  * Whether this page promises to fit the viewport, so the shell may cap its own

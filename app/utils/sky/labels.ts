@@ -51,9 +51,9 @@ const PIN_CLEAR_PX = 16
 const COMPASS_CLEAR_PX = 10
 const LINE_CLEAR_PX = 1
 const LABEL_CLEAR_PX = 4
-/** Labels stay on screen, and below the search bar. */
+/** Labels stay on screen, and below the search bar and the title panel. */
 const EDGE_PX = 8
-const TOP_BAR_PX = 60
+const TOP_BAR_PX = 104
 /** The sun's bright core, in world units, stays clear of every label. */
 const SUN_CLEAR = 0.16
 /** The planet's disc, a touch beyond its surface for the atmosphere, stays clear too. */

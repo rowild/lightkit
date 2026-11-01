@@ -19,7 +19,8 @@
           role="dialog"
           aria-modal="true"
           aria-label="Sky view"
-          class="fixed inset-x-0 top-0 h-svh z-5500 flex flex-col text-ink bg-[radial-gradient(120%_90%_at_50%_38%,#0b1418_0%,#05080a_70%)]"
+          tabindex="-1"
+          class="fixed inset-x-0 top-0 h-svh z-5500 flex flex-col text-ink outline-none bg-[radial-gradient(120%_90%_at_50%_38%,#0b1418_0%,#05080a_70%)]"
         >
           <ul class="sr-only">
             <li v-for="line in windowSummary" :key="line">{{ line }}</li>
@@ -45,7 +46,8 @@
             <p v-else class="max-w-xs px-6 text-center t-body-sm text-ink-muted">{{ failureText }}</p>
           </div>
 
-          <div class="relative z-10 flex items-center gap-2 px-3 sm:px-5 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <!-- z-20: the search results open downwards over the title panel. -->
+          <div class="relative z-20 flex items-center gap-2 px-3 sm:px-5 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <div class="relative grow min-w-0 max-w-md">
               <label for="sky-search" class="sr-only">Search a place</label>
               <Search
@@ -81,15 +83,6 @@
             </div>
             <span class="t-label-xs normal-case shrink-0">{{ dateLabel }}</span>
             <button
-              type="button"
-              aria-label="About the sky view"
-              v-tooltip="'What this view shows'"
-              class="tap grid items-center justify-end rounded-full text-ink-faint hover:text-ink transition-colors cursor-pointer shrink-0"
-              @click="infoOpen = true"
-            >
-              <Info :size="20" :stroke-width="1.75" />
-            </button>
-            <button
               ref="closeEl"
               type="button"
               aria-label="Close the sky view"
@@ -99,6 +92,52 @@
             >
               <X :size="22" :stroke-width="1.75" />
             </button>
+          </div>
+
+          <!-- The title stays on the stage. What the view is for stays folded
+               away until asked for, so it costs the planet nothing. Opening it
+               lays the text over the stage and never resizes the scene. -->
+          <div class="relative z-10 mt-2 px-3 sm:px-5">
+            <div class="absolute left-3 sm:left-5 top-0 w-[calc(100%-1.5rem)] max-w-md glass-panel rounded-xl">
+              <AccordionItem v-model:open="aboutOpen" title="Sky view" button-class="px-3 py-2">
+                <template #icon><Orbit :size="14" :stroke-width="1.5" /></template>
+                <div class="flex flex-col gap-3 max-h-[52svh] overflow-y-auto px-3 pb-3 pt-1 select-text">
+                  <p class="t-body-sm !text-ink">
+                    See the whole day's light at a glance: where the sun travels over your place,
+                    and when the light turns golden and blue. Use it to compare places and seasons
+                    before you plan a shoot.
+                  </p>
+                  <p class="t-body-sm">
+                    The bow is the sun's path on this date, drawn over the place on top of the
+                    planet. Each fan starts at that place and reaches the part of the bow where the
+                    light is golden (amber) or blue (cyan).
+                  </p>
+                  <p class="t-body-sm">
+                    <strong class="font-semibold text-ink">Sky path</strong> is the true path across
+                    the sky. Golden fans sit just above the horizon ring, blue fans just below it. A
+                    low, flat bow means long golden hours.
+                  </p>
+                  <p class="t-body-sm">
+                    <strong class="font-semibold text-ink">Clock</strong> is the Day Schedule bent
+                    into a half circle: from one midnight of the sun on the left to the next on the
+                    right, morning first.
+                  </p>
+                  <p class="t-body-sm">
+                    A bead marks each full hour; the brighter the bead, the higher the sun. The
+                    glowing bands on the planet are everywhere golden or blue hour is happening at
+                    the moment the sun marks.
+                  </p>
+                  <p class="t-body-sm">
+                    Tap the planet or search to explore another place. Your place on the solar page
+                    does not change. Times are in this device's time zone.
+                  </p>
+                  <p class="t-body-sm text-ink-faint">
+                    Earth imagery: NASA Visible Earth (Blue Marble) and NASA Earth Observatory
+                    (Black Marble). Land outline: Natural Earth.
+                  </p>
+                </div>
+              </AccordionItem>
+            </div>
           </div>
 
           <div class="grow"></div>
@@ -154,38 +193,6 @@
         </div>
       </Transition>
     </Teleport>
-
-    <!-- z-6000, above the overlay's z-5500, so it needs no `elevated`. -->
-    <InfoModal v-model:open="infoOpen" title="Sky view">
-      <div class="flex flex-col gap-4 t-body text-ink-muted">
-        <p>
-          The bow is the sun's path on this date, drawn over the place on top of the planet. Each fan
-          starts at that place and reaches the part of the bow where the light is golden (amber) or
-          blue (cyan).
-        </p>
-        <p>
-          <strong class="font-semibold text-ink">Sky path</strong> is the true path across the sky.
-          Golden fans sit just above the horizon ring, blue fans just below it. A low, flat bow means
-          long golden hours.
-        </p>
-        <p>
-          <strong class="font-semibold text-ink">Clock</strong> is the Day Schedule bent into a half
-          circle: from one midnight of the sun on the left to the next on the right, morning first.
-        </p>
-        <p>
-          A bead marks each full hour; the brighter the bead, the higher the sun. The glowing bands on
-          the planet are everywhere golden or blue hour is happening at the moment the sun marks.
-        </p>
-        <p>
-          Tap the planet or search to explore another place. Your place on the solar page does not
-          change. Times are in this device's time zone.
-        </p>
-        <p class="t-body-sm text-ink-faint">
-          Earth imagery: NASA Visible Earth (Blue Marble) and NASA Earth Observatory (Black Marble).
-          Land outline: Natural Earth.
-        </p>
-      </div>
-    </InfoModal>
   </ClientOnly>
 </template>
 
@@ -200,8 +207,8 @@
  * overlay opens. Spec: docs/superpowers/specs/2026-10-10-sky-view-design.md.
  */
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { Info, LocateFixed, Search, X } from '@lucide/vue'
-import InfoModal from '../InfoModal.vue'
+import { LocateFixed, Orbit, Search, X } from '@lucide/vue'
+import AccordionItem from '../AccordionItem.vue'
 import {
   formatCoordinates,
   latestOnly,
@@ -221,6 +228,9 @@ const props = defineProps<{
   lat: number
   lng: number
   date: Date
+  /** Nobody asked for this opening, so it must not take the focus or get in the
+      way if it fails. See `openedByItself` in DaySchedule. */
+  openedByItself?: boolean
 }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
@@ -238,9 +248,8 @@ const canvasEl = ref<HTMLCanvasElement | null>(null)
 const labelEl = ref<HTMLElement | null>(null)
 const closeEl = ref<HTMLButtonElement | null>(null)
 
-// The explanation lives behind ⓘ, not on the stage (AGENTS.md: secondary text
-// belongs in a modal).
-const infoOpen = ref(false)
+// The title is always on the stage; its explanation stays folded until asked for.
+const aboutOpen = ref(false)
 
 // Remembered choices (spec 6.4). Anything else found in storage falls back.
 const storedBow = usePersistedRef<string>('sky-bow', 'sky')
@@ -360,6 +369,12 @@ let resizeObserver: ResizeObserver | null = null
 
 const close = () => emit('update:open', false)
 
+/** A failure on an opening nobody asked for just leaves the page underneath. */
+const failed = (reason: Status) => {
+  status.value = reason
+  if (props.openedByItself) close()
+}
+
 const stop = () => {
   session++
   resizeObserver?.disconnect()
@@ -387,7 +402,7 @@ const start = async () => {
     sceneModule = await import('../../utils/sky/scene')
   } catch (err) {
     console.error('[SkyView] The scene could not load', err)
-    if (id === session) status.value = 'needs-connection'
+    if (id === session) failed('needs-connection')
     return
   }
   if (id !== session || !canvasEl.value || !labelEl.value) return
@@ -399,7 +414,7 @@ const start = async () => {
     })
   } catch (err) {
     console.error('[SkyView] WebGL is unavailable', err)
-    status.value = 'no-webgl'
+    failed('no-webgl')
     return
   }
   scene.onPick(pickPlace)
@@ -440,7 +455,6 @@ const onKeydown = (event: KeyboardEvent) => {
 let returnFocusTo: HTMLElement | null = null
 watch(() => props.open, async (isOpen) => {
   if (!isOpen) {
-    infoOpen.value = false
     clearSearch()
     returnFocusTo?.focus()
     returnFocusTo = null
@@ -448,12 +462,26 @@ watch(() => props.open, async (isOpen) => {
   }
   returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
   place.value = { lat: props.lat, lng: props.lng }
+  aboutOpen.value = false
   earthUnavailable.value = false
   offline.value = !navigator.onLine
   showHomeName()
   await nextTick()
-  closeEl.value?.focus()
+  // After a tap the close button is the right place for the focus. On a page
+  // that has just loaded it would count as keyboard focus, and show its ring and
+  // its tooltip to someone who has not touched anything yet.
+  if (props.openedByItself) rootEl.value?.focus()
+  else closeEl.value?.focus()
   start()
+})
+
+// A first visit has no location yet when the view opens by itself: it arrives
+// from the browser a moment later. Follow it, unless the reader has already
+// gone exploring somewhere else.
+watch(() => [props.lat, props.lng] as const, ([lat, lng], [oldLat, oldLng]) => {
+  if (!props.open || place.value.lat !== oldLat || place.value.lng !== oldLng) return
+  place.value = { lat, lng }
+  showHomeName()
 })
 
 onMounted(() => {
