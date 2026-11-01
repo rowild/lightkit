@@ -2,8 +2,7 @@
   <div>
     <button
       type="button"
-      class="tap w-full flex items-center justify-between gap-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity cursor-pointer"
-      :class="buttonClass ?? 'py-3'"
+      class="tap w-full flex items-center justify-between gap-3 py-3 text-left t-title !text-brand-petrol-900 dark:!text-brand-glow hover:opacity-80 transition-opacity cursor-pointer"
       :aria-expanded="open"
       :aria-controls="panelId"
       @click="$emit('update:open', !open)"
@@ -33,9 +32,9 @@
 /**
  * One foldable section: a title that stays, content that does not.
  *
- * The only accordion in the app, so the sky view and the settings drawer fold and
- * look the same. The parent owns `open`, which is what lets Settings keep one
- * section open at a time.
+ * The only accordion in the app, so anything that folds looks the same as the
+ * settings drawer does. The parent owns `open`, which is what lets Settings keep
+ * one section open at a time.
  */
 import { useId } from 'vue'
 import { ChevronDown } from '@lucide/vue'
@@ -43,8 +42,6 @@ import { ChevronDown } from '@lucide/vue'
 defineProps<{
   title: string
   open: boolean
-  /** Spacing of the title row, for a section that sits inside its own panel. */
-  buttonClass?: string
 }>()
 
 defineEmits<{ (e: 'update:open', value: boolean): void }>()

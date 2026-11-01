@@ -127,6 +127,10 @@ already — noted against each so nobody starts from scratch.
 
 ## Left open by the start page — 2026-11-01
 
+- [ ] **The solar page's map has no height on a phone held sideways.** At 844 x 390
+      OpenLayers warns that its container's width or height is 0. Seen behind the
+      sky view and not looked at after closing it. The rule in AGENTS.md that the
+      map carries no minimum height below `lg` was written for upright phones.
 - [ ] **Should the sky view remember that it was closed?** It opens on every
       entry to `/solar`, as asked, so someone who only wants the map closes it
       every time, and a phone downloads three.js and the Earth images on the first

@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.0.17] - 2026-11-01
+
+### Changed
+
+- **The Solar Planner shows a clear Sky view button** in the Day Schedule header,
+  in place of a small icon.
+- **The sky view's close button moved to the top right corner,** away from the
+  search field, with an info button beside it. The title and fold-out section
+  are gone: the info button opens the explanation in a small see-through window,
+  like a screen on a windshield, with its own close button. The planet stays in
+  view behind it, and the time labels step out of its way.
+
 ## [0.0.16] - 2026-11-01
 
 ### Added

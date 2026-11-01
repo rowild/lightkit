@@ -17,7 +17,7 @@ import { PALETTE } from './palette'
 import { createStars } from './stars'
 import { createBow } from './bow'
 import { createBeads } from './beads'
-import { createLabels } from './labels'
+import { createLabels, type KeepClear } from './labels'
 import { createEarth } from './planetEarth'
 import { createDots } from './planetDots'
 import type { Planet, SkyLayer } from './types'
@@ -30,6 +30,8 @@ export interface SkySceneOptions {
   /** An element laid exactly over the canvas, for the HTML labels. */
   labelLayer: HTMLElement
   reducedMotion: boolean
+  /** A part of the stage the labels must leave alone, such as a window over it. */
+  labelsKeepClear?: KeepClear
 }
 
 export interface SkyScene {
@@ -63,7 +65,7 @@ const PLANET_FADE_SECONDS = 0.6
 const REDUCED_FADE_SECONDS = 0.2
 const INTRO_SPIN = 25 * DEG
 
-export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOptions): SkyScene => {
+export const createSkyScene = ({ canvas, labelLayer, reducedMotion, labelsKeepClear }: SkySceneOptions): SkyScene => {
   // Throws where WebGL is unavailable. SkyView catches it and shows its note.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -110,7 +112,7 @@ export const createSkyScene = ({ canvas, labelLayer, reducedMotion }: SkySceneOp
   spinner.add(globe)
   scene.add(spinner)
 
-  const layers: SkyLayer[] = [createBow(), createBeads(), createLabels()]
+  const layers: SkyLayer[] = [createBow(), createBeads(), createLabels(labelsKeepClear)]
   for (const layer of layers) scene.add(layer.object)
 
   const planets: Partial<Record<PlanetMode, Planet>> = {}

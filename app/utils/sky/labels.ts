@@ -51,9 +51,9 @@ const PIN_CLEAR_PX = 16
 const COMPASS_CLEAR_PX = 10
 const LINE_CLEAR_PX = 1
 const LABEL_CLEAR_PX = 4
-/** Labels stay on screen, and below the search bar and the title panel. */
+/** Labels stay on screen, and below the search bar. */
 const EDGE_PX = 8
-const TOP_BAR_PX = 104
+const TOP_BAR_PX = 60
 /** The sun's bright core, in world units, stays clear of every label. */
 const SUN_CLEAR = 0.16
 /** The planet's disc, a touch beyond its surface for the atmosphere, stays clear too. */
@@ -72,7 +72,7 @@ const PATH_FADED_ALT = -10
  * last a line: each point of the bow or a fan, and a tenth of that for each
  * point of the faint horizon ring.
  */
-const COST = { offscreen: 100, label: 50, pin: 50, sun: 30, planet: 30, compass: 20, line: 1, ring: 0.1 } as const
+const COST = { offscreen: 100, keepClear: 60, label: 50, pin: 50, sun: 30, planet: 30, compass: 20, line: 1, ring: 0.1 } as const
 
 const formatTime = (d: Date) =>
   d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -89,7 +89,10 @@ interface Box {
   y1: number
 }
 
-export const createLabels = (): SkyLayer => {
+/** A part of the stage labels must leave alone, in pixels from the top left, or null. */
+export type KeepClear = () => Box | null
+
+export const createLabels = (keepClear: KeepClear = () => null): SkyLayer => {
   const group = new THREE.Group()
   let model: SkyModel | null = null
   let mode: BowMode = 'sky'
@@ -110,7 +113,7 @@ export const createLabels = (): SkyLayer => {
     element.append(text)
     const object = new CSS2DObject(element)
     group.add(object)
-    return { name, golden, element, text, object, label: '', width: 0, height: 0, offset: '' }
+    return { name, golden, element, text, object, label: '', width: 0, height: 0, offset: '', hidden: false }
   })
   // Golden times are placed first: they lead.
   const placingOrder = [...windows].sort((a, b) => Number(b.golden) - Number(a.golden))
@@ -131,7 +134,7 @@ export const createLabels = (): SkyLayer => {
     const object = new CSS2DObject(element)
     object.position.copy(compassWorld[i]!)
     group.add(object)
-    return element
+    return { element, hidden: false }
   })
 
   /** The fan's tip: the window's middle, on the bow. */
@@ -218,14 +221,25 @@ export const createLabels = (): SkyLayer => {
     }
     disc(planetCenter, PLANET_RADIUS * PLANET_CLEAR, COST.planet)
     if (hasSun) disc(sunWorld, SUN_CLEAR, COST.sun)
-    for (const point of compassWorld) {
+    const clear = keepClear()
+    const inKeepClear = (b: Box) =>
+      !!clear && b.x0 < clear.x1 + LABEL_CLEAR_PX && clear.x0 < b.x1 + LABEL_CLEAR_PX && b.y0 < clear.y1 + LABEL_CLEAR_PX && clear.y0 < b.y1 + LABEL_CLEAR_PX
+    const setHidden = (holder: { hidden: boolean }, element: HTMLElement, hidden: boolean) => {
+      if (holder.hidden === hidden) return
+      element.style.visibility = hidden ? 'hidden' : ''
+      holder.hidden = hidden
+    }
+
+    compassWorld.forEach((point, i) => {
       project(point)
       circles.push({ x: px, y: py, r: COMPASS_CLEAR_PX, cost: COST.compass })
-    }
+      const letter = { x0: px - COMPASS_CLEAR_PX, y0: py - COMPASS_CLEAR_PX, x1: px + COMPASS_CLEAR_PX, y1: py + COMPASS_CLEAR_PX }
+      setHidden(compass[i]!, compass[i]!.element, inKeepClear(letter))
+    })
 
     /** 0 when the box is free; otherwise how badly it is placed. */
     const penalty = (b: Box) => {
-      let cost = 0
+      let cost = inKeepClear(b) ? COST.keepClear : 0
       if (b.x0 < EDGE_PX || b.x1 > width - EDGE_PX || b.y0 < TOP_BAR_PX || b.y1 > height - EDGE_PX) cost += COST.offscreen
       for (const o of placed) {
         if (b.x0 < o.x1 + LABEL_CLEAR_PX && o.x0 < b.x1 + LABEL_CLEAR_PX && b.y0 < o.y1 + LABEL_CLEAR_PX && o.y0 < b.y1 + LABEL_CLEAR_PX) cost += COST.label
@@ -296,6 +310,9 @@ export const createLabels = (): SkyLayer => {
       }
       if (!best) continue
       placed.push(best.box)
+      // A tip deep behind the window has no free spot within reach. Better no
+      // time for now than a time printed through someone's sentence.
+      setHidden(label, label.text, inKeepClear(best.box))
       const offset = `translate(${Math.round(best.box.x0 + hw - tip.x)}px, ${Math.round(best.box.y0 + hh - tip.y)}px)`
       if (offset !== label.offset) {
         label.text.style.transform = offset
@@ -371,7 +388,7 @@ export const createLabels = (): SkyLayer => {
       }
       const compassOpacity = opacity * reveal.labels * 0.7
       if (compassOpacity !== lastCompassOpacity) {
-        for (const element of compass) element.style.opacity = String(compassOpacity)
+        for (const { element } of compass) element.style.opacity = String(compassOpacity)
         lastCompassOpacity = compassOpacity
       }
     },

@@ -479,8 +479,8 @@ planned tool means moving its entry up into `tools`.
 
 ## Accordions
 
-`AccordionItem.vue` is the only one. The parent owns `open`, which is how Settings
-keeps one section open at a time. It animates a grid row from `0fr` to `1fr`, so
+`AccordionItem.vue` is the only one, and Settings is its user. The parent owns
+`open`, which is how Settings keeps one section open at a time. It animates a grid row from `0fr` to `1fr`, so
 it needs no guessed height. Settings guessed 400px with `max-height` before.
 
 ## Secondary text belongs in a modal
@@ -497,8 +497,8 @@ a phone. The cost only shows up later, which is exactly why it has to be a rule
 rather than a judgement call each time.
 
 The sky view is the one exception, by Robert's request on 2026-11-01: a dialog on
-top of a full-screen stage hides the thing it explains, so its explanation folds
-out under its title in an `AccordionItem` instead.
+top of a full-screen stage hides the thing it explains, so its explanation floats
+over the stage in a see-through window instead (see Sky view).
 
 Use `InfoModal.vue` — a titled dialog with a content slot, teleported to body.
 `PhaseInfoModal.vue` keeps its own file because its content is a structured list
@@ -575,13 +575,32 @@ purpose, such as next Saturday's shoot, must not jump away at midnight.
 ## Sky view
 
 A full-screen 3D view of the day that **opens by itself on every entry to
-`/solar`** (Robert's rule, 2026-11-01), and comes back through the orbit button in
-the Day Schedule header once closed. It shows a small planet, the sun's path as a bow over the selected place, and fans
+`/solar`** (Robert's rule, 2026-11-01), and comes back through the named "Sky view"
+button in the Day Schedule header once closed. That button carries its name
+because a bare orbit icon was easy to miss, and it keeps the row's height with a
+pseudo-element target rather than `.tap`. It shows a small planet, the sun's path as a bow over the selected place, and fans
 from the place to the golden and blue parts of the bow. Two bows (the true sky
 path, and the bar bent into a clock) and two planets (NASA Earth, a dot globe),
 each remembered (`dpt:sky-bow`, `dpt:sky-planet`). Spec:
 `docs/superpowers/specs/2026-10-10-sky-view-design.md`.
 
+*   **"Sky view" names the door, not the stage.** The stage carries no title: the
+    planet is the subject, and the switches at the bottom already name what is on
+    show. Robert's call, 2026-11-01, after a title and an accordion were tried.
+*   **Close sits in the far corner, ⓘ beside it**, never next to the search
+    field, where an X reads as "clear this input".
+*   **The explanation is a screen on the windshield** (Robert, 2026-11-01): a small
+    floating frame, high on the right where the sky is empty, that you read while
+    looking through it. It never moves or dims the stage.
+    *   Height is `max(25svh, 16rem)`. 16rem is two thirds of a phone held sideways.
+    *   Next to no background. **The text-shadow is what keeps it readable** over the
+        planet, so do not "fix" legibility by raising the tint.
+    *   It has **its own X inside its own frame**, because the corner X closes the
+        whole view. Escape closes one thing at a time: results, text, view.
+    *   **Time labels and compass letters leave it alone** (`labelsKeepClear`): a
+        label steps out of the window, and one with no free spot within reach hides
+        until it closes, because a time printed through a sentence ruins both.
+    *   The lit ⓘ is a corona (`box-shadow` with transparency), not a filled disc.
 *   **An opening nobody asked for stays out of the way** (`openedByItself`). It
     takes the focus on the dialog rather than the close button, because on a page
     that just loaded that counts as keyboard focus and pops the tooltip. If the

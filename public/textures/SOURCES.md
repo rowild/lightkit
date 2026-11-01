@@ -14,7 +14,7 @@ time the sky view opens (same-origin requests are stale-while-revalidate in
 `scripts/build-card-art.mjs`.
 
 NASA imagery is not protected by copyright; NASA asks to be credited, which
-the sky view's title panel does. Natural Earth is in the public domain.
+the sky view's info window does. Natural Earth is in the public domain.
 
 ## Rebuilding
 

@@ -32,13 +32,22 @@ here instead of being asked.
   redirect, and browsers refuse a redirected response for a navigation. A real
   page at `/` removes the redirect; the cache name is bumped to drop the old entry.
 
+## Changed after review, same day
+
+Robert looked at the result. The title and accordion on the stage are gone: "Sky
+view" names the button on the solar page, not the stage. Close moved to the far
+corner, an info button sits beside it, and the explanation opens in a small
+see-through window with its own close button, like a screen on a windshield.
+`AccordionItem.vue` stays, for Settings.
+
 ## Steps
 
 - [x] Card art: `scripts/build-card-art.mjs` writes `public/cards/*.webp`
 - [x] `tools.ts`: art, planned tools, `toolForPath` returns null on `/`
 - [x] `pages/index.vue`, `components/home/*`
 - [x] Shell: the page scrolls on `/`, the wordmark links home
-- [x] `AccordionItem.vue`, used by `SkyView` and `ApiKeyModal`
+- [x] `AccordionItem.vue`, used by `ApiKeyModal`
+- [x] Sky view: corner close, info button, see-through text window, labels keep clear of it
 - [x] Sky view opens by itself, follows a location that arrives late
 - [x] Service worker cache bump
 - [x] Check phone and desktop, light and dark, in a browser

@@ -1,22 +1,31 @@
 <template>
   <div class="glass-panel p-3 sm:p-4 lg:p-6 rounded-2xl shadow-sm flex flex-col gap-2 sm:gap-3">
 
-    <div class="row-kv">
+    <div class="row-kv mb-1 sm:mb-0">
       <h4 class="t-label text-[11px] sm:text-xs">Day Schedule</h4>
       <!-- The date and the sky view's button share the value cell, so row-kv
-           still keeps the pair on one line. -->
-      <span class="inline-flex items-baseline gap-2">
-        <span class="t-label-xs normal-case text-[10px] sm:text-[11px]">{{ formattedDate }}</span>
-        <!-- On the panel's right edge, so justify-end (AGENTS.md, .tap). The
-             negative margin stops the 44px touch target growing the row. -->
+           still keeps the pair on one line. The weekday shortens on a phone, where
+           "Wednesday" would squeeze the heading into an ellipsis. -->
+      <span class="inline-flex items-center gap-2.5">
+        <span class="t-label-xs normal-case text-[10px] sm:hidden">{{ shortDate }}</span>
+        <span class="t-label-xs normal-case hidden sm:inline">{{ formattedDate }}</span>
+        <!-- Named, not an icon: this is a place to go, and a bare orbit glyph was
+             easy to miss. Tinted in the structural accent, because amber and cyan
+             mean golden and blue hour on this panel.
+
+             Not `.tap`: its 44px floor would turn this chip into a block on a
+             phone, and this row must not grow, since the map pays for every
+             pixel. The pseudo-element gives it a 38px target (the `.tap-sm` floor)
+             without changing what is drawn, and the negative margin keeps the row
+             at its text height. -->
         <button
           type="button"
-          aria-label="Open the sky view"
-          v-tooltip="'Open the sky view'"
-          class="tap grid items-center justify-end -my-4 self-center rounded-full text-ink-faint hover:text-brand-petrol-600 dark:hover:text-brand-glow transition-colors cursor-pointer"
+          aria-haspopup="dialog"
+          class="relative -my-1.5 inline-flex items-center gap-1.5 h-6 px-2 rounded-lg border border-brand-petrol-800/30 dark:border-brand-glow/40 bg-brand-petrol-800/8 dark:bg-brand-glow/10 hover:bg-brand-petrol-800/16 dark:hover:bg-brand-glow/20 t-label-xs !text-brand-petrol-800 dark:!text-brand-glow transition-colors cursor-pointer before:absolute before:content-[''] before:inset-x-0 before:-top-2.5 before:-bottom-1"
           @click="openSky"
         >
-          <Orbit :size="16" :stroke-width="1.75" />
+          <Orbit :size="13" :stroke-width="1.75" class="shrink-0" />
+          Sky view
         </button>
       </span>
     </div>
@@ -244,6 +253,14 @@ const getSegmentDurationPercentage = (segment: SolarSegment) => {
   const segmentDuration = segment.end.getTime() - segment.start.getTime()
   return (segmentDuration / totalDuration) * 100
 }
+
+const shortDate = computed(() =>
+  props.date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  })
+)
 
 const formatTime = (d: Date | undefined) => {
   if (!d || isNaN(d.getTime())) return '--:--'
